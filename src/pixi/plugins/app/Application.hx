@@ -4,7 +4,6 @@ import js.html.Element;
 import pixi.core.renderers.webgl.WebGLRenderer;
 import pixi.core.renderers.canvas.CanvasRenderer;
 import pixi.core.renderers.SystemRenderer;
-import pixi.plugins.stats.Stats;
 import pixi.core.renderers.Detector;
 import pixi.core.display.Container;
 import js.html.Event;
@@ -111,7 +110,6 @@ class Application {
 
 	var canvas:CanvasElement;
 	var renderer:SystemRenderer;
-	var stats:Stats;
 	var lastTime:Float;
 	var currentTime:Float;
 	var elapsedTime:Float;
@@ -152,12 +150,9 @@ class Application {
 	/**
 	 * Starts pixi application setup using the properties set or default values
 	 * @param [renderer] - Renderer type to use AUTO (default) | CANVAS | WEBGL
-	 * @param [stats] - Enable/disable stats for the application.
-	 * Note that stats.js is not part of pixi so don't forget to include it you html page
-	 * Can be found in libs folder. "libs/stats.min.js" <script type="text/javascript" src="libs/stats.min.js"></script>
 	 * @param [parentDom] - By default canvas will be appended to body or it can be appended to custom element if passed
 	 */
-	public function start(?renderer:String = AUTO, ?stats:Bool = true, ?parentDom:Element = null) {
+	public function start(?renderer:String = AUTO, ?parentDom:Element = null) {
 		
 		canvas = Browser.document.createCanvasElement();
 		canvas.style.width = width + "px";
@@ -186,8 +181,6 @@ class Application {
 		if (autoResize) Browser.window.onresize = _onWindowResize;
 		TimeUtil.frameTick.connect(onRequestAnimationFrame);
 		lastTime = Browser.window.performance.now();
-
-		if (stats) addStats();
 	}
 
 	@:noCompletion function _onWindowResize(event:Event) {
@@ -196,11 +189,6 @@ class Application {
 		renderer.resize(width, height);
 		canvas.style.width = width + "px";
 		canvas.style.height = height + "px";
-
-		if (stats != null) {
-			stats.domElement.style.top = "2px";
-			stats.domElement.style.right = "2px";
-		}
 
 		if (onResize != null) onResize();
 	}
@@ -213,7 +201,6 @@ class Application {
 			if (onUpdate != null) onUpdate(elapsedTime);
 			renderer.render(stage);
 		}
-		if (stats != null) stats.update();
 	}
 
 
@@ -221,19 +208,5 @@ class Application {
 		currentTime = Browser.window.performance.now();
 		elapsedTime = currentTime - lastTime;
 		lastTime = currentTime;
-	}
-
-
-	@:noCompletion function addStats() {
-		if (untyped __js__("window").Stats != null) {
-			var container = Browser.document.createElement("div");
-			Browser.document.body.appendChild(container);
-			stats = new Stats();
-			stats.domElement.style.position = "absolute";
-			stats.domElement.style.top = "2px";
-			stats.domElement.style.right = "2px";
-			container.appendChild(stats.domElement);
-			stats.begin();
-		}
 	}
 }

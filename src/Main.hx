@@ -1,12 +1,13 @@
 package;
 
+import js.Browser;
 import js.html.audio.AudioBuffer;
 import js.html.audio.AudioContext;
 import js.html.audio.GainNode;
+import pixi.plugins.app.Application;
 
 import tones.AudioBase;
 import tones.data.OscillatorType;
-import tones.Samples;
 import tones.Tones;
 import tones.utils.NoteFrequencyUtil;
 import tones.utils.TimeUtil;
@@ -18,14 +19,11 @@ import tones.utils.TimeUtil;
  * @author Mike Almond - https://github.com/mikedotalmond
  */
 
-class Main {
+class Main extends Application {
 
-	static function main() {
-		new Main();
-	}
+	static function main()  new Main();
 	
 	var tones:Tones;
-	var samples:Samples;
 	
 	var restartId:Int;
 	var buffer:AudioBuffer;
@@ -34,8 +32,20 @@ class Main {
 	
 	public function new() {
 		
+		super();
+		initPixi();
+		initAudio();
+	}
+	
+	function initPixi() {
+		backgroundColor = 0x0a0a1a;
+		start(null, Browser.document.getElementById('pixi-container'));
+	}
+	
+	function initAudio() {
+		
+		
 		ctx = AudioBase.createContext();
-		new Parameter
 		outGain = ctx.createGain();
 		outGain.gain.value = .7;
 		outGain.connect(ctx.destination);
@@ -43,57 +53,18 @@ class Main {
 		tones = new Tones(ctx, outGain);
 		tones.type = OscillatorType.SINE;
 		tones.attack = 0.01;
-		tones.release = .5;
-		tones.volume = .2;
-		playSequence(1);
-		
-		//samples = new Samples(ctx, outGain);
-		//samples.itemBegin.connect(onSampleBegin);
-		//
-		//var request = new XMLHttpRequest();
-		//request.open("GET", 'samples/kick.wav', true);
-		//request.responseType = XMLHttpRequestResponseType.ARRAYBUFFER;
-		//request.onload = function(_) samples.context.decodeAudioData(_.currentTarget.response, sampleDecoded);
-		//request.send();
-		
-	}	
-	
-	function sampleDecoded(buffer:AudioBuffer) {
-		this.buffer = buffer;
-		
-		samples.attack = 0;
-		
-		// play it pitched up a bit (5 tones)
-		var rate = NoteFrequencyUtil.rateFromNote(5, 0, 0);
-		
-		samples.release = buffer.duration / rate;
-		samples.playbackRate = rate;
-		
-		restartId = samples.lastId;
-		samples.playSample(buffer, .5); 
+		tones.release = .1;
+		tones.volume = .25;
+		playSequence(0);
 	}
 	
 	function playSequence(delay:Float=0) {
-		
-		tones.volume = .05;
-		tones.playFrequency(110, delay+TimeUtil.stepTime(1.5));
-		tones.playFrequency(440, delay+TimeUtil.stepTime(4));
-		tones.playFrequency(220, delay+TimeUtil.stepTime(4.5));
-		tones.playFrequency(440, delay+TimeUtil.stepTime(6));
-		
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(1)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(2)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(3)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(4)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(5)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(6)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(6.25)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(6.5)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(6.75)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(7)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(7.25)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(7.5)); 
-		//samples.playSample(buffer, delay + TimeUtil.stepTime(7.75));
-		//restartId = samples.playSample(buffer, delay + TimeUtil.stepTime(8));
+		tones.playFrequency(440, delay + TimeUtil.stepTime(.5));
+		tones.playFrequency(440, delay + TimeUtil.stepTime(1));
+		tones.playFrequency(440, delay + TimeUtil.stepTime(1.5));
+		tones.playFrequency(440, delay + TimeUtil.stepTime(2));
+		tones.playFrequency(440, delay + TimeUtil.stepTime(2.5));
+		tones.playFrequency(440, delay + TimeUtil.stepTime(3));
+		tones.playFrequency(440, delay + TimeUtil.stepTime(3.5));
 	}
 }

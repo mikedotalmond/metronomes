@@ -89,8 +89,8 @@ class AudioBase {
 		// If I use context.currentTime the setTargetAtTime will not fade-out, it just ends aruptly.
 		// Even with this delay in place it's still occasionaly glitchy...
 		// Works fine in Chrome
-		releaseFudge = isFirefox() ? (4096 / context.sampleRate) : 0;
-
+		releaseFudge = 0;// isFirefox() ? 1 : 0;
+		
 		// set some reasonable defaults
 		attack 	= 0.0;
 		release = 1.0;
