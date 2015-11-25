@@ -13,6 +13,7 @@ class TimeUtil {
 
 	public inline static function stepTime(beats:Float, bpm:Float = 120):Float return beats / (bpm / 60);
 
+
 	static public var frameTick(get, never):Signal<Float->Void>;
 
 	static var _frameTick:Signal<Float->Void> = null;
@@ -22,7 +23,7 @@ class TimeUtil {
 		_frameTick.emit(_);
 		Browser.window.requestAnimationFrame(onFrame);
 	}
-	
+
 	static function __init__() {
 		_frameTick = new Signal<Float->Void>();
 		Browser.window.requestAnimationFrame(onFrame);

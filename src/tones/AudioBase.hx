@@ -69,7 +69,7 @@ class AudioBase {
 			context = audioContext;
 		}
 
-		sampleTime = 1.0 / audioContext.sampleRate;
+		sampleTime = 1.0 / context.sampleRate;
 		
 		if (destinationNode == null) destination = context.destination;
 		else destination = destinationNode;
