@@ -25,18 +25,30 @@ import tones.utils.TimeUtil;
  * De-underscored the privates.
  */
 class Application {
+	
+	public static inline var AUTO:String = "auto";
+	public static inline var RECOMMENDED:String = "recommended";
+	public static inline var CANVAS:String = "canvas";
+	public static inline var WEBGL:String = "webgl";
+	
+	/**
+	 * time since application started - window.performance.now()
+	 * @return
+	 */
+	public static inline function now():Float return Browser.window.performance.now();
+	
 
 	/**
      * Sets the pixel ratio of the application.
      * default - 1
      */
-	public var pixelRatio(null, default):Float;
+	public var pixelRatio:Float;
 
 	/**
 	 * Default frame rate is 60 FPS and this can be set to true to get 30 FPS.
 	 * default - false
 	 */
-	public var skipFrame(null, set):Bool;
+	public var skipFrame(default, set):Bool;
 
 	/**
 	 * Default frame rate is 60 FPS and this can be set to anything between 1 - 60.
@@ -48,44 +60,50 @@ class Application {
 	 * Width of the application.
 	 * default - Browser.window.innerWidth
 	 */
-	public var width(null, default):Float;
+	public var width:Float;
 
 	/**
 	 * Height of the application.
 	 * default - Browser.window.innerHeight
 	 */
-	public var height(null, default):Float;
+	public var height:Float;
 
 	/**
 	 * Renderer transparency property.
 	 * default - false
 	 */
-	public var transparent(null, default):Bool;
+	public var transparent:Bool;
 
 	/**
 	 * Graphics antialias property.
 	 * default - false
 	 */
-	public var antialias(null, default):Bool;
+	public var antialias:Bool;
 
 	/**
-	 * Force FXAA shader antialias instead of native (faster)
+	 * Force FXAA shader antialias instead of native (faster).
 	 * default - false
 	 */
-	public var forceFXAA(null, default):Bool;
+	public var forceFXAA:Bool;
+
+	/**
+	 * Force round pixels.
+	 * default - false
+	 */
+	public var roundPixels:Bool;
 
 	/**
 	 * Whether you want to resize the canvas and renderer on browser resize.
 	 * Should be set to false when custom width and height are used for the application.
 	 * default - true
 	 */
-	public var autoResize(null, default):Bool;
+	public var autoResize:Bool;
 
 	/**
 	 * Sets the background color of the stage.
 	 * default - 0xFFFFFF
 	 */
-	public var backgroundColor(null, default):Int;
+	public var backgroundColor:Int;
 
 	/**
 	 * Update listener 	function
@@ -98,22 +116,27 @@ class Application {
 	public var onResize:Void -> Void;
 
 	/**
+	 * Canvas Element
+	 * Read-only
+	 */
+	public var canvas(default, null):CanvasElement;
+
+	/**
+	 * Renderer
+	 * Read-only
+	 */
+	public var renderer(default, null):Dynamic;
+
+	/**
 	 * Global Container.
 	 * Read-only
 	 */
-	var stage(default, null):Container;
+	public var stage(default, null):Container;
+	
 
-	public static inline var AUTO:String = "auto";
-	public static inline var RECOMMENDED:String = "recommended";
-	public static inline var CANVAS:String = "canvas";
-	public static inline var WEBGL:String = "webgl";
-
-	var canvas:CanvasElement;
-	var renderer:SystemRenderer;
 	var lastTime:Float;
 	var currentTime:Float;
 	var elapsedTime:Float;
-
 	var frameCount:Int;
 
 	public function new() {
@@ -149,18 +172,21 @@ class Application {
 
 	/**
 	 * Starts pixi application setup using the properties set or default values
-	 * @param [renderer] - Renderer type to use AUTO (default) | CANVAS | WEBGL
+	 * @param [rendererType] - Renderer type to use AUTO (default) | CANVAS | WEBGL
+	 * @param [stats] - Enable/disable stats for the application.
+	 * Note that stats.js is not part of pixi so don't forget to include it you html page
+	 * Can be found in libs folder. "libs/stats.min.js" <script type="text/javascript" src="libs/stats.min.js"></script>
 	 * @param [parentDom] - By default canvas will be appended to body or it can be appended to custom element if passed
 	 */
-	public function start(?renderer:String = AUTO, ?parentDom:Element = null) {
-		
+
+	public function start(?rendererType:String = "auto", ?parentDom:Element) {
 		canvas = Browser.document.createCanvasElement();
 		canvas.style.width = width + "px";
 		canvas.style.height = height + "px";
 		canvas.style.position = "absolute";
-		
-		if (parentDom == null) parentDom = Browser.document.body;
-		
+		if (parentDom == null) Browser.document.body.appendChild(canvas);
+		else parentDom.appendChild(canvas);
+
 		stage = new Container();
 
 		var renderingOptions:RenderingOptions = {};
@@ -172,15 +198,15 @@ class Application {
 		renderingOptions.autoResize = autoResize;
 		renderingOptions.transparent = transparent;
 
-		if (renderer == AUTO) this.renderer = Detector.autoDetectRenderer(width, height, renderingOptions);
-		else if (renderer == CANVAS) this.renderer = new CanvasRenderer(width, height, renderingOptions);
-		else this.renderer = new WebGLRenderer(width, height, renderingOptions);
+		if (rendererType == AUTO) renderer = Detector.autoDetectRenderer(width, height, renderingOptions);
+		else if (rendererType == CANVAS) renderer = new CanvasRenderer(width, height, renderingOptions);
+		else renderer = new WebGLRenderer(width, height, renderingOptions);
 
-		parentDom.appendChild(this.renderer.view);
-		
+		if (roundPixels) renderer.roundPixels = true;
 		if (autoResize) Browser.window.onresize = _onWindowResize;
+		
 		TimeUtil.frameTick.connect(onRequestAnimationFrame);
-		lastTime = Browser.window.performance.now();
+		lastTime = now();
 	}
 
 	@:noCompletion function _onWindowResize(event:Event) {
@@ -204,8 +230,8 @@ class Application {
 	}
 
 
-	@:noCompletion function calculateElapsedTime() {
-		currentTime = Browser.window.performance.now();
+	@:noCompletion inline function calculateElapsedTime() {
+		currentTime = now();
 		elapsedTime = currentTime - lastTime;
 		lastTime = currentTime;
 	}

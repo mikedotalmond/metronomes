@@ -2,7 +2,7 @@ package;
 
 import haxe.Timer;
 import nape.shape.Polygon;
-import napetools.NapeHelpers;
+import pixi.plugins.NapeHelpers;
 
 import nape.callbacks.CbEvent;
 import nape.callbacks.CbType;
@@ -167,6 +167,8 @@ class Metronome {
 		var v = massVelocityX;
 		massBall.applyImpulse(Vec2.weak(42 * (v > 0?1: -1), 0));
 		
+		//setTuneAnchorPosition(.001 + index*0.005 + tickIndex / (n+1));
+		
 		ticked = true;
 	}
 	
@@ -179,16 +181,9 @@ class Metronome {
 		graphics.clear();
 		
 		
-		//var c = 
-		//if (ticked) {
-			//}
-			
-		
 		var v = tickIndex / 12;
 		var c = Std.int((v * .9) * 0xff);
-		c = c << 16 | c << 8 | c;
-		
-		
+		c = c << 16 | (c>>1) << 8 | (c>>1);
 		
 		var poly:Polygon = bar.shapes.at(0).castPolygon;
 		var vertices = poly.worldVerts;
@@ -205,17 +200,18 @@ class Metronome {
 		graphics.endFill();
 		
 		// mass ball
-		graphics.beginFill(0xBACAEF);
+		c = ticked ? 0xfD1414 : 0x5A1010;
+		graphics.beginFill(c);
 		graphics.drawCircle(massBall.position.x, massBall.position.y, 32);
 		graphics.endFill();
 		
 		// pivot
-		graphics.beginFill(0x292B54);
+		graphics.beginFill(0xF50E0E);
 		graphics.drawCircle(pivotBall.position.x, pivotBall.position.y, 8);
 		graphics.endFill();
 		
 		// tune
-		graphics.beginFill(0xaaffaa);
+		graphics.beginFill(0xF8B1B1);
 		graphics.drawCircle(tuneWeight.position.x, tuneWeight.position.y, 16);
 		graphics.endFill();
 		

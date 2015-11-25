@@ -1,4 +1,4 @@
-package napetools;
+package pixi.plugins.app;
 
 /**
  * ...
@@ -9,15 +9,15 @@ import js.html.audio.AudioContext;
 import js.html.Element;
 import nape.geom.Vec2;
 import nape.space.Space;
-import pixi.core.display.Container;
 import pixi.plugins.app.Application;
+
 import tones.AudioBase;
 
 class NapeApplication extends Application { 
 	
 	static public var FixedTimeStep					:Float	= 1.0 / 60.0;
-	static public var PositionIterationsPerTimeStep	:Int 	= 20;
-	static public var VelocityIterationsPerTimeStep	:Int 	= 20;
+	static public var PositionIterationsPerTimeStep	:Int 	= 50;
+	static public var VelocityIterationsPerTimeStep	:Int 	= 50;
 	
 	public var space		(default, null):Space;
 	public var audioContext	(default, null):AudioContext;

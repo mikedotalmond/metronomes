@@ -1,4 +1,4 @@
-package napetools;
+package pixi.plugins;
 
 import nape.geom.Vec2;
 import nape.phys.Body;

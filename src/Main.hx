@@ -5,6 +5,7 @@ import haxe.Timer;
 import js.Browser;
 import js.html.audio.GainNode;
 import pixi.core.display.Container;
+import pixi.plugins.NapeHelpers;
 import tones.utils.NoteFrequencyUtil;
 
 import nape.callbacks.CbEvent;
@@ -14,7 +15,7 @@ import nape.callbacks.InteractionType;
 import nape.geom.Vec2;
 import nape.space.Space;
 
-import napetools.NapeApplication;
+import pixi.plugins.app.NapeApplication;
 
 import tones.AudioBase;
 import tones.data.OscillatorType;
@@ -33,24 +34,24 @@ class Main extends NapeApplication {
 	var outGain:GainNode;
 	
 	var noteIndex:Int = -1;
-	var notes:Array<Int> = [69, 71, 72, 76, 69, 71, 72, 76,69, 71, 72, 76];
+	var notes:Array<Int> = [];
 	var freqs:Array<Float> = [];
 	//
 	var container:Container;
 	
 	public function new() {
+		noteUtils = new NoteFrequencyUtil();
 		super(Browser.document.getElementById('pixi-container'), new Space(Vec2.get(0, 10000)), AudioBase.createContext());
-		
 	}
 	
 	override function setup() {
 		
-		var noteUtils = new NoteFrequencyUtil();
-		
-		
 		renderer.backgroundColor = 0x292B54;
 		
+		notes = [for (i in 0...12) 63 + Std.int(Math.random() * 18) ]; // 1.5 octave range
+		
 		for (note in 0...notes.length) freqs.push(noteUtils.noteIndexToFrequency(notes[Std.int(Math.random()*notes.length)]));
+		
 		
 		// setup pixi
 		container = new Container();
@@ -58,14 +59,14 @@ class Main extends NapeApplication {
 		container.scale.set(.75);
 		// setupAudio
 		outGain = audioContext.createGain();
-		outGain.gain.value = .7;
+		outGain.gain.value = 1.0;
 		outGain.connect(audioContext.destination);
 		
 		tones = new Tones(audioContext, outGain);
 		tones.type = OscillatorType.SAWTOOTH;
-		tones.attack = 0.001;
-		tones.release = .1;
-		tones.volume = .01;	
+		tones.attack = 0.05;
+		tones.release = 0.5;
+		tones.volume = .5;	
 		
 		//
 		createMetronomes();
@@ -99,9 +100,9 @@ class Main extends NapeApplication {
 		metronomes = [];
 		var py = 240;
 		var px = 0;
-		for (i in 0...3) {
+		for (i in 0...2) {
 			metronomes[i] = new Metronome(i, px, py, space);
-			metronomes[i].setTuneAnchorPosition(.05 - 0.01 * i);
+			metronomes[i].setTuneAnchorPosition(.001 +  0.01 * i);
 			container.addChild(metronomes[i].graphics);
 			px += 215;
 		}
@@ -122,13 +123,17 @@ class Main extends NapeApplication {
 	var maxTickVelocity:Float = 1400;
 	var tickListener:InteractionListener;
 	var metronomes:Array<Metronome>;
+	var noteUtils:tones.utils.NoteFrequencyUtil;
 	
 	function tickSensorHandler(cb:InteractionCallback):Void {
 		
 		var m:Metronome = cb.int2.userData.metronome;
 		
 		m.tick(freqs.length);
-		tones.playFrequency(freqs[m.tickIndex]);
+		
+		var f = freqs[m.tickIndex];
+		tones.playFrequency(noteUtils.detune(f, Std.int(NapeHelpers.rRange(33))));
+		
 	}
 	
 	

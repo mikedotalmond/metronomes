@@ -63,14 +63,14 @@ pixi_plugins_app_Application.prototype = {
 		this.height = window.innerHeight;
 		this.set_fps(60);
 	}
-	,start: function(renderer,parentDom) {
-		if(renderer == null) renderer = "auto";
+	,start: function(rendererType,parentDom) {
+		if(rendererType == null) rendererType = "auto";
 		var _this = window.document;
 		this.canvas = _this.createElement("canvas");
 		this.canvas.style.width = this.width + "px";
 		this.canvas.style.height = this.height + "px";
 		this.canvas.style.position = "absolute";
-		if(parentDom == null) parentDom = window.document.body;
+		if(parentDom == null) window.document.body.appendChild(this.canvas); else parentDom.appendChild(this.canvas);
 		this.stage = new PIXI.Container();
 		var renderingOptions = { };
 		renderingOptions.view = this.canvas;
@@ -80,8 +80,8 @@ pixi_plugins_app_Application.prototype = {
 		renderingOptions.forceFXAA = this.forceFXAA;
 		renderingOptions.autoResize = this.autoResize;
 		renderingOptions.transparent = this.transparent;
-		if(renderer == "auto") this.renderer = PIXI.autoDetectRenderer(this.width,this.height,renderingOptions); else if(renderer == "canvas") this.renderer = new PIXI.CanvasRenderer(this.width,this.height,renderingOptions); else this.renderer = new PIXI.WebGLRenderer(this.width,this.height,renderingOptions);
-		parentDom.appendChild(this.renderer.view);
+		if(rendererType == "auto") this.renderer = PIXI.autoDetectRenderer(this.width,this.height,renderingOptions); else if(rendererType == "canvas") this.renderer = new PIXI.CanvasRenderer(this.width,this.height,renderingOptions); else this.renderer = new PIXI.WebGLRenderer(this.width,this.height,renderingOptions);
+		if(this.roundPixels) this.renderer.roundPixels = true;
 		if(this.autoResize) window.onresize = $bind(this,this._onWindowResize);
 		tones_utils_TimeUtil.get_frameTick().connect($bind(this,this.onRequestAnimationFrame));
 		this.lastTime = window.performance.now();
@@ -98,19 +98,16 @@ pixi_plugins_app_Application.prototype = {
 		this.frameCount++;
 		if(this.frameCount == (60 / this.fps | 0)) {
 			this.frameCount = 0;
-			this.calculateElapsedTime();
+			this.currentTime = window.performance.now();
+			this.elapsedTime = this.currentTime - this.lastTime;
+			this.lastTime = this.currentTime;
 			if(this.onUpdate != null) this.onUpdate(this.elapsedTime);
 			this.renderer.render(this.stage);
 		}
 	}
-	,calculateElapsedTime: function() {
-		this.currentTime = window.performance.now();
-		this.elapsedTime = this.currentTime - this.lastTime;
-		this.lastTime = this.currentTime;
-	}
 	,__class__: pixi_plugins_app_Application
 };
-var napetools_NapeApplication = function(domContainer,space,audioContext) {
+var pixi_plugins_app_NapeApplication = function(domContainer,space,audioContext) {
 	pixi_plugins_app_Application.call(this);
 	this.initNape(space);
 	this.initPixi(domContainer);
@@ -120,9 +117,9 @@ var napetools_NapeApplication = function(domContainer,space,audioContext) {
 	this.onResize = $bind(this,this.resize);
 	this.resize();
 };
-napetools_NapeApplication.__name__ = true;
-napetools_NapeApplication.__super__ = pixi_plugins_app_Application;
-napetools_NapeApplication.prototype = $extend(pixi_plugins_app_Application.prototype,{
+pixi_plugins_app_NapeApplication.__name__ = true;
+pixi_plugins_app_NapeApplication.__super__ = pixi_plugins_app_Application;
+pixi_plugins_app_NapeApplication.prototype = $extend(pixi_plugins_app_Application.prototype,{
 	initPixi: function(domContainer) {
 		this.antialias = true;
 		this.start(null,domContainer);
@@ -138,8 +135,8 @@ napetools_NapeApplication.prototype = $extend(pixi_plugins_app_Application.proto
 	,tick: function(dt) {
 		this.updateSpace(dt);
 		this.cumalativeDt += dt;
-		while(this.cumalativeDt >= napetools_NapeApplication.FixedTimeStep) {
-			this.space.step(napetools_NapeApplication.FixedTimeStep,napetools_NapeApplication.VelocityIterationsPerTimeStep,napetools_NapeApplication.PositionIterationsPerTimeStep);
+		while(this.cumalativeDt >= pixi_plugins_app_NapeApplication.FixedTimeStep) {
+			this.space.step(pixi_plugins_app_NapeApplication.FixedTimeStep,pixi_plugins_app_NapeApplication.VelocityIterationsPerTimeStep,pixi_plugins_app_NapeApplication.PositionIterationsPerTimeStep);
 			this.cumalativeDt -= dt;
 		}
 		this.draw(dt);
@@ -152,48 +149,55 @@ napetools_NapeApplication.prototype = $extend(pixi_plugins_app_Application.proto
 	}
 	,resize: function() {
 	}
-	,__class__: napetools_NapeApplication
+	,__class__: pixi_plugins_app_NapeApplication
 });
 var Main = function() {
 	this.freqs = [];
-	this.notes = [69,71,72,76,69,71,72,76,69,71,72,76];
-	napetools_NapeApplication.call(this,window.document.getElementById("pixi-container"),new nape_space_Space(nape_geom_Vec2.get(0,10000,null)),tones_AudioBase.createContext());
+	this.notes = [];
+	this.noteUtils = new tones_utils_NoteFrequencyUtil();
+	pixi_plugins_app_NapeApplication.call(this,window.document.getElementById("pixi-container"),new nape_space_Space(nape_geom_Vec2.get(0,10000,null)),tones_AudioBase.createContext());
 };
 Main.__name__ = true;
 Main.main = function() {
 	new Main();
 };
-Main.__super__ = napetools_NapeApplication;
-Main.prototype = $extend(napetools_NapeApplication.prototype,{
+Main.__super__ = pixi_plugins_app_NapeApplication;
+Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 	setup: function() {
-		var _g = this;
-		var noteUtils = new tones_utils_NoteFrequencyUtil();
+		var _g1 = this;
 		this.renderer.backgroundColor = 2698068;
-		var _g1 = 0;
-		var _g2 = this.notes.length;
-		while(_g1 < _g2) {
-			var note = _g1++;
-			this.freqs.push(noteUtils.noteIndexToFrequency(this.notes[Std["int"](Math.random() * this.notes.length)]));
+		var _g = [];
+		var _g11 = 0;
+		while(_g11 < 12) {
+			var i = _g11++;
+			_g.push(63 + Std["int"](Math.random() * 18));
+		}
+		this.notes = _g;
+		var _g2 = 0;
+		var _g12 = this.notes.length;
+		while(_g2 < _g12) {
+			var note = _g2++;
+			this.freqs.push(this.noteUtils.noteIndexToFrequency(this.notes[Std["int"](Math.random() * this.notes.length)]));
 		}
 		this.container = new PIXI.Container();
 		this.stage.addChild(this.container);
 		this.container.scale.set(.75);
 		this.outGain = this.audioContext.createGain();
-		this.outGain.gain.value = .7;
+		this.outGain.gain.value = 1.0;
 		this.outGain.connect(this.audioContext.destination);
 		this.tones = new tones_Tones(this.audioContext,this.outGain);
 		this.tones.type = window.OscillatorTypeShim.SAWTOOTH;
-		this.tones.set_attack(0.001);
-		this.tones.set_release(.1);
-		this.tones.set_volume(.01);
+		this.tones.set_attack(0.05);
+		this.tones.set_release(0.5);
+		this.tones.set_volume(.5);
 		this.createMetronomes();
 		haxe_Timer.delay($bind(this,this.resize),1);
 		haxe_Timer.delay(function() {
-			var _g11 = 0;
-			var _g21 = _g.metronomes;
-			while(_g11 < _g21.length) {
-				var m = _g21[_g11];
-				++_g11;
+			var _g21 = 0;
+			var _g3 = _g1.metronomes;
+			while(_g21 < _g3.length) {
+				var m = _g3[_g21];
+				++_g21;
 				m.applyStartForce();
 			}
 		},2500);
@@ -225,10 +229,10 @@ Main.prototype = $extend(napetools_NapeApplication.prototype,{
 		var py = 240;
 		var px = 0;
 		var _g = 0;
-		while(_g < 3) {
+		while(_g < 2) {
 			var i = _g++;
 			this.metronomes[i] = new Metronome(i,px,py,this.space);
-			this.metronomes[i].setTuneAnchorPosition(.05 - 0.01 * i);
+			this.metronomes[i].setTuneAnchorPosition(.001 + 0.01 * i);
 			this.container.addChild(this.metronomes[i].graphics);
 			px += 215;
 		}
@@ -256,7 +260,8 @@ Main.prototype = $extend(napetools_NapeApplication.prototype,{
 	,tickSensorHandler: function(cb) {
 		var m = cb.zpp_inner.int2.outer_i.get_userData().metronome;
 		m.tick(this.freqs.length);
-		this.tones.playFrequency(this.freqs[m.tickIndex]);
+		var f = this.freqs[m.tickIndex];
+		this.tones.playFrequency(this.noteUtils.detune(f,Std["int"]((Math.random() - .5) * 66)));
 	}
 	,__class__: Main
 });
@@ -995,7 +1000,7 @@ Metronome.prototype = {
 		var compound = new nape_phys_Compound();
 		px = this._x;
 		py = this._y - 100;
-		b = napetools_NapeHelpers.createBox((function($this) {
+		b = pixi_plugins_NapeHelpers.createBox((function($this) {
 			var $r;
 			if(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC == null) {
 				zpp_$nape_util_ZPP_$Flags.internal = true;
@@ -1020,7 +1025,7 @@ Metronome.prototype = {
 		if(b.zpp_inner.compound == null) null; else b.zpp_inner.compound.outer;
 		this.bar = b;
 		py = this._y + 100;
-		b = napetools_NapeHelpers.createCircle((function($this) {
+		b = pixi_plugins_NapeHelpers.createCircle((function($this) {
 			var $r;
 			if(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC == null) {
 				zpp_$nape_util_ZPP_$Flags.internal = true;
@@ -1038,7 +1043,7 @@ Metronome.prototype = {
 		if(b.zpp_inner.compound == null) null; else b.zpp_inner.compound.outer;
 		this.massBall = b;
 		py = this._y;
-		b = napetools_NapeHelpers.createCircle((function($this) {
+		b = pixi_plugins_NapeHelpers.createCircle((function($this) {
 			var $r;
 			if(zpp_$nape_util_ZPP_$Flags.BodyType_KINEMATIC == null) {
 				zpp_$nape_util_ZPP_$Flags.internal = true;
@@ -1055,7 +1060,7 @@ Metronome.prototype = {
 		if(b.zpp_inner.compound == null) null; else b.zpp_inner.compound.outer;
 		this.pivotBall = b;
 		py = this._y - 100;
-		b = napetools_NapeHelpers.createCircle((function($this) {
+		b = pixi_plugins_NapeHelpers.createCircle((function($this) {
 			var $r;
 			if(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC == null) {
 				zpp_$nape_util_ZPP_$Flags.internal = true;
@@ -1128,7 +1133,7 @@ Metronome.prototype = {
 		this.graphics.clear();
 		var v = this.tickIndex / 12;
 		var c = v * .9 * 255 | 0;
-		c = c << 16 | c << 8 | c;
+		c = c << 16 | c >> 1 << 8 | c >> 1;
 		var poly = this.bar.zpp_inner.wrap_shapes.at(0).get_castPolygon();
 		var vertices;
 		if(poly.zpp_inner_zn.wrap_gverts == null) poly.zpp_inner_zn.getgverts();
@@ -1182,13 +1187,14 @@ Metronome.prototype = {
 			return $r;
 		}(this)));
 		this.graphics.endFill();
-		this.graphics.beginFill(12241647);
+		if(this.ticked) c = 16585748; else c = 5902352;
+		this.graphics.beginFill(c);
 		this.graphics.drawCircle(this.massBall.get_position().get_x(),this.massBall.get_position().get_y(),32);
 		this.graphics.endFill();
-		this.graphics.beginFill(2698068);
+		this.graphics.beginFill(16059918);
 		this.graphics.drawCircle(this.pivotBall.get_position().get_x(),this.pivotBall.get_position().get_y(),8);
 		this.graphics.endFill();
-		this.graphics.beginFill(11206570);
+		this.graphics.beginFill(16298417);
 		this.graphics.drawCircle(this.tuneWeight.get_position().get_x(),this.tuneWeight.get_position().get_y(),16);
 		this.graphics.endFill();
 		this.ticked = false;
@@ -5726,9 +5732,9 @@ nape_space_Space.prototype = {
 	}
 	,__class__: nape_space_Space
 };
-var napetools_NapeHelpers = function() { };
-napetools_NapeHelpers.__name__ = true;
-napetools_NapeHelpers.createBox = function(type,x,y,w,h) {
+var pixi_plugins_NapeHelpers = function() { };
+pixi_plugins_NapeHelpers.__name__ = true;
+pixi_plugins_NapeHelpers.createBox = function(type,x,y,w,h) {
 	var b = new nape_phys_Body(type);
 	b.zpp_inner.wrap_shapes.add(new nape_shape_Polygon(nape_shape_Polygon.rect(0,0,w,h)));
 	var pivot = ((function($this) {
@@ -5758,7 +5764,7 @@ napetools_NapeHelpers.createBox = function(type,x,y,w,h) {
 	}(this))).setxy(x,y);
 	return b;
 };
-napetools_NapeHelpers.createCircle = function(type,x,y,r) {
+pixi_plugins_NapeHelpers.createCircle = function(type,x,y,r) {
 	var b = new nape_phys_Body(type);
 	b.zpp_inner.wrap_shapes.add(new nape_shape_Circle(r));
 	((function($this) {
@@ -5773,6 +5779,7 @@ var tones_AudioBase = function(audioContext,destinationNode) {
 	this.lastTime = .0;
 	this.ID = 0;
 	if(audioContext == null) this.context = tones_AudioBase.createContext(); else this.context = audioContext;
+	this.sampleTime = 1.0 / audioContext.sampleRate;
 	if(destinationNode == null) this.destination = this.context.destination; else this.destination = destinationNode;
 	this.delayedBegin = [];
 	this.delayedRelease = [];
@@ -5785,7 +5792,6 @@ var tones_AudioBase = function(audioContext,destinationNode) {
 	this.itemBegin = new hxsignal_impl_Signal2();
 	this.itemEnd = new hxsignal_impl_Signal1();
 	this.timedEvent = new hxsignal_impl_Signal2();
-	this.releaseFudge = 0;
 	this.set_attack(0.0);
 	this.set_release(1.0);
 	this.set_volume(.2);
@@ -5802,10 +5808,10 @@ tones_AudioBase.prototype = {
 		if(data == null) return;
 		var time;
 		var nowTime = this.context.currentTime;
-		if(atTime < nowTime) time = nowTime; else time = atTime;
-		time += this.releaseFudge;
+		if(atTime <= nowTime) time = nowTime + this.sampleTime; else time = atTime;
 		data.env.gain.cancelScheduledValues(time);
-		data.env.gain.setTargetAtTime(0,time,Math.log(this._release + 1.0) / 4.605170185988092);
+		data.env.gain.linearRampToValueAtTime(0,time + this._release);
+		data.env.gain.setValueAtTime(0,time + this._release);
 		this.delayedRelease.push({ id : id, time : time});
 		this.delayedEnd.push({ id : id, time : time + this._release});
 	}
@@ -5820,11 +5826,11 @@ tones_AudioBase.prototype = {
 		this.activeItems.remove(id);
 	}
 	,set_attack: function(value) {
-		if(value < 0.001) value = 0;
+		if(value < this.sampleTime) value = this.sampleTime;
 		return this._attack = value;
 	}
 	,set_release: function(value) {
-		if(value < 0.001) value = 0.001;
+		if(value < this.sampleTime) value = this.sampleTime;
 		return this._release = value;
 	}
 	,set_volume: function(value) {
@@ -5898,26 +5904,27 @@ tones_Tones.prototype = $extend(tones_AudioBase.prototype,{
 	playFrequency: function(freq,delayBy,autoRelease) {
 		if(autoRelease == null) autoRelease = true;
 		if(delayBy == null) delayBy = .0;
+		if(delayBy < 0) delayBy = 0;
 		var id;
 		this.lastId = this.ID;
 		this.ID++;
 		id = this.lastId;
-		var envelope = this.context.createGain();
 		var triggerTime = this.context.currentTime + delayBy;
 		var releaseTime = triggerTime + this._attack;
-		if(this._attack > 0) {
-			envelope.gain.value = 0;
-			envelope.gain.setTargetAtTime(this._volume,triggerTime,Math.log(this._attack + 1.0) / 4.605170185988092);
-		} else envelope.gain.value = this._volume;
+		var envelope = this.context.createGain();
+		envelope.gain.value = 0;
+		envelope.gain.setValueAtTime(0,triggerTime);
+		envelope.gain.linearRampToValueAtTime(this._volume,releaseTime);
+		envelope.gain.setValueAtTime(this._volume,releaseTime);
 		envelope.connect(this.destination);
 		var osc = this.context.createOscillator();
 		if(this.type == window.OscillatorTypeShim.CUSTOM) osc.setPeriodicWave(this.customWave); else osc.type = this.type;
 		osc.frequency.value = freq;
 		osc.connect(envelope);
-		osc.start(triggerTime);
+		osc.start(triggerTime + this.sampleTime);
 		this.activeItems.h[id] = { id : id, src : osc, env : envelope, volume : this._volume, attack : this._attack, release : this._release, triggerTime : triggerTime};
-		this.delayedBegin.push({ id : id, time : triggerTime});
-		if(autoRelease) this.doRelease(id,releaseTime);
+		if(delayBy < this.sampleTime) this.triggerItemBegin(id,triggerTime); else this.delayedBegin.push({ id : id, time : triggerTime});
+		if(autoRelease) this.doRelease(id,releaseTime + this.sampleTime);
 		return id;
 	}
 	,__class__: tones_Tones
@@ -5947,6 +5954,9 @@ tones_utils_NoteFrequencyUtil.prototype = {
 	,noteIndexToFrequency: function(index) {
 		if(index >= 0 && index < 128) return this.noteFrequencies[index];
 		return NaN;
+	}
+	,detune: function(freq,detuneCents) {
+		if(detuneCents == 0) return freq; else if(detuneCents < 0) return freq / Math.pow(2,-detuneCents * 0.00083333333333333339); else return freq * Math.pow(2,detuneCents * 0.00083333333333333339);
 	}
 	,indexToName: function(index) {
 		var pitch = index % 12;
@@ -21151,9 +21161,9 @@ if(node != null) {
 }
 tones_utils_TimeUtil._frameTick = new hxsignal_impl_Signal1();
 window.requestAnimationFrame(tones_utils_TimeUtil.onFrame);
-napetools_NapeApplication.FixedTimeStep = 0.016666666666666666;
-napetools_NapeApplication.PositionIterationsPerTimeStep = 20;
-napetools_NapeApplication.VelocityIterationsPerTimeStep = 20;
+pixi_plugins_app_NapeApplication.FixedTimeStep = 0.016666666666666666;
+pixi_plugins_app_NapeApplication.PositionIterationsPerTimeStep = 50;
+pixi_plugins_app_NapeApplication.VelocityIterationsPerTimeStep = 50;
 zpp_$nape_callbacks_ZPP_$CbType.ANY_SHAPE = new nape_callbacks_CbType();
 zpp_$nape_callbacks_ZPP_$CbType.ANY_BODY = new nape_callbacks_CbType();
 zpp_$nape_callbacks_ZPP_$CbType.ANY_COMPOUND = new nape_callbacks_CbType();
