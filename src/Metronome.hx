@@ -149,26 +149,11 @@ class Metronome {
 		
 		compound.space = space;
 		
-		
-		//tuneAnimation = new Script();
-		//owner.add(tuneAnimation);
-		//var sequence = new Repeat(
-			//new Sequence([
-				//new Delay(index*.0666),
-				//new AnimateTo(tunePosition, 1, 12 - index/6, Ease.quintInOut),
-				//new AnimateTo(tunePosition, 0, 6  - index/3, Ease.quadInOut),
-			//])
-		//);
-		
-		//ring = new ImageSprite(textureAtlas.get('Ring')).centerAnchor().setXY(_x, _y + BAR_LENGTH / 2 - (256 / 4));
-		//ring.alpha._ = 0;
-		//owner.addChild(new Entity().add(ring), false);
-		
 		this.x = _x;
 		this.y = _y;
 		
 		tuneAnchorPosition = -1;
-		setTuneAnchorPosition(0.01);
+		setTuneAnchorPosition(0.5);
 	}
 	
 	public function applyStartForce() {
@@ -176,8 +161,8 @@ class Metronome {
 	}
 	
 	public var tickIndex(default,null):Int = -1;
-	public function tick() {
-		tickIndex = (tickIndex + 1) % 12;
+	public function tick(n:Int) {
+		tickIndex = (tickIndex + 1) % n;
 
 		var v = massVelocityX;
 		massBall.applyImpulse(Vec2.weak(42 * (v > 0?1: -1), 0));
@@ -198,13 +183,18 @@ class Metronome {
 		//if (ticked) {
 			//}
 			
-		var c:Int;
+		
+		var v = tickIndex / 12;
+		var c = Std.int((v * .9) * 0xff);
+		c = c << 16 | c << 8 | c;
+		
+		
 		
 		var poly:Polygon = bar.shapes.at(0).castPolygon;
 		var vertices = poly.worldVerts;
 		var position = vertices.at(0);
 		
-		graphics.beginFill(0);
+		graphics.beginFill(c);
 		graphics.moveTo(position.x, position.y);
 		for (i in 1...vertices.length) {
 			position = vertices.at(i);
@@ -214,17 +204,13 @@ class Metronome {
 		graphics.lineTo(position.x, position.y);
 		graphics.endFill();
 		
-		var v = tickIndex / 12;
-		c = Std.int((v * .75) * 0xff);
-		c = c<<16| c<<8 | c;
-		
 		// mass ball
-		graphics.beginFill(c);
+		graphics.beginFill(0xBACAEF);
 		graphics.drawCircle(massBall.position.x, massBall.position.y, 32);
 		graphics.endFill();
 		
 		// pivot
-		graphics.beginFill(0xaaaaff);
+		graphics.beginFill(0x292B54);
 		graphics.drawCircle(pivotBall.position.x, pivotBall.position.y, 8);
 		graphics.endFill();
 		

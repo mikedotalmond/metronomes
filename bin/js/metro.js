@@ -111,7 +111,6 @@ pixi_plugins_app_Application.prototype = {
 	,__class__: pixi_plugins_app_Application
 };
 var napetools_NapeApplication = function(domContainer,space,audioContext) {
-	this.backgroundColor = 657946;
 	pixi_plugins_app_Application.call(this);
 	this.initNape(space);
 	this.initPixi(domContainer);
@@ -156,7 +155,8 @@ napetools_NapeApplication.prototype = $extend(pixi_plugins_app_Application.proto
 	,__class__: napetools_NapeApplication
 });
 var Main = function() {
-	this.notes = [440,330,540,720,480,444,440,330,540,720,480,444];
+	this.freqs = [];
+	this.notes = [69,71,72,76,69,71,72,76];
 	napetools_NapeApplication.call(this,window.document.getElementById("pixi-container"),new nape_space_Space(nape_geom_Vec2.get(0,9820,null)),tones_AudioBase.createContext());
 };
 Main.__name__ = true;
@@ -166,14 +166,15 @@ Main.main = function() {
 Main.__super__ = napetools_NapeApplication;
 Main.prototype = $extend(napetools_NapeApplication.prototype,{
 	setup: function() {
-		var _g1 = this;
-		var _g = [];
-		var _g11 = 0;
-		while(_g11 < 12) {
-			var i = _g11++;
-			_g.push(220 + Math.random() * 660);
+		var _g = this;
+		var noteUtils = new tones_utils_NoteFrequencyUtil();
+		this.renderer.backgroundColor = 2698068;
+		var _g1 = 0;
+		var _g2 = this.notes.length;
+		while(_g1 < _g2) {
+			var note = _g1++;
+			this.freqs.push(noteUtils.noteIndexToFrequency(this.notes[Std["int"](Math.random() * this.notes.length)]));
 		}
-		this.notes = _g;
 		this.container = new PIXI.Container();
 		this.stage.addChild(this.container);
 		this.container.scale.set(.75);
@@ -188,11 +189,11 @@ Main.prototype = $extend(napetools_NapeApplication.prototype,{
 		this.createMetronomes();
 		haxe_Timer.delay($bind(this,this.resize),1);
 		haxe_Timer.delay(function() {
-			var _g2 = 0;
-			var _g3 = _g1.metronomes;
-			while(_g2 < _g3.length) {
-				var m = _g3[_g2];
-				++_g2;
+			var _g11 = 0;
+			var _g21 = _g.metronomes;
+			while(_g11 < _g21.length) {
+				var m = _g21[_g11];
+				++_g11;
 				m.applyStartForce();
 			}
 		},2500);
@@ -224,12 +225,12 @@ Main.prototype = $extend(napetools_NapeApplication.prototype,{
 		var py = 240;
 		var px = 0;
 		var _g = 0;
-		while(_g < 6) {
+		while(_g < 2) {
 			var i = _g++;
 			this.metronomes[i] = new Metronome(i,px,py,this.space);
-			this.metronomes[i].setTuneAnchorPosition(0.5 + 0.005 * i);
+			this.metronomes[i].setTuneAnchorPosition(.05 - 0.005 * i);
 			this.container.addChild(this.metronomes[i].graphics);
-			px += 220;
+			px += 215;
 		}
 		this.tickListener = new nape_callbacks_InteractionListener((function($this) {
 			var $r;
@@ -254,8 +255,8 @@ Main.prototype = $extend(napetools_NapeApplication.prototype,{
 	}
 	,tickSensorHandler: function(cb) {
 		var m = cb.zpp_inner.int2.outer_i.get_userData().metronome;
-		m.tick();
-		this.tones.playFrequency(this.notes[m.tickIndex]);
+		m.tick(this.freqs.length);
+		this.tones.playFrequency(this.freqs[m.tickIndex]);
 	}
 	,__class__: Main
 });
@@ -1110,13 +1111,13 @@ Metronome.prototype = {
 		this.set_x(this._x);
 		this.set_y(this._y);
 		this.tuneAnchorPosition = -1;
-		this.setTuneAnchorPosition(0.01);
+		this.setTuneAnchorPosition(0.5);
 	}
 	,applyStartForce: function() {
 		this.massBall.applyImpulse(nape_geom_Vec2.get(8192,0,true));
 	}
-	,tick: function() {
-		this.tickIndex = (this.tickIndex + 1) % 12;
+	,tick: function(n) {
+		this.tickIndex = (this.tickIndex + 1) % n;
 		var v = this.massBall.get_velocity().get_x();
 		this.massBall.applyImpulse(nape_geom_Vec2.get(42 * (v > 0?1:-1),0,true));
 		this.ticked = true;
@@ -1125,13 +1126,15 @@ Metronome.prototype = {
 	}
 	,draw: function(dt) {
 		this.graphics.clear();
-		var c;
+		var v = this.tickIndex / 12;
+		var c = v * .9 * 255 | 0;
+		c = c << 16 | c << 8 | c;
 		var poly = this.bar.zpp_inner.wrap_shapes.at(0).get_castPolygon();
 		var vertices;
 		if(poly.zpp_inner_zn.wrap_gverts == null) poly.zpp_inner_zn.getgverts();
 		vertices = poly.zpp_inner_zn.wrap_gverts;
 		var position = vertices.at(0);
-		this.graphics.beginFill(0);
+		this.graphics.beginFill(c);
 		this.graphics.moveTo((function($this) {
 			var $r;
 			if(position.zpp_disp) throw new js__$Boot_HaxeError(new js__$Boot_HaxeError("Error: " + "Vec2" + " has been disposed and cannot be used!"));
@@ -1179,13 +1182,10 @@ Metronome.prototype = {
 			return $r;
 		}(this)));
 		this.graphics.endFill();
-		var v = this.tickIndex / 12;
-		c = v * .75 * 255 | 0;
-		c = c << 16 | c << 8 | c;
-		this.graphics.beginFill(c);
+		this.graphics.beginFill(12241647);
 		this.graphics.drawCircle(this.massBall.get_position().get_x(),this.massBall.get_position().get_y(),32);
 		this.graphics.endFill();
-		this.graphics.beginFill(11184895);
+		this.graphics.beginFill(2698068);
 		this.graphics.drawCircle(this.pivotBall.get_position().get_x(),this.pivotBall.get_position().get_y(),8);
 		this.graphics.endFill();
 		this.graphics.beginFill(11206570);
@@ -1219,6 +1219,9 @@ var Std = function() { };
 Std.__name__ = true;
 Std.string = function(s) {
 	return js_Boot.__string_rec(s,"");
+};
+Std["int"] = function(x) {
+	return x | 0;
 };
 var haxe_IMap = function() { };
 haxe_IMap.__name__ = true;
@@ -5921,6 +5924,51 @@ tones_Tones.prototype = $extend(tones_AudioBase.prototype,{
 });
 var tones_data_OscillatorTypeShim = function() { };
 tones_data_OscillatorTypeShim.__name__ = true;
+var tones_utils_NoteFrequencyUtil = function() {
+	if(tones_utils_NoteFrequencyUtil.pitchNames == null) {
+		tones_utils_NoteFrequencyUtil.pitchNames = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+		tones_utils_NoteFrequencyUtil.altPitchNames = [null,"Db",null,"Eb",null,null,"Gb",null,"Ab",null,"Bb",null];
+	}
+	this.noteFrequencies = new Float32Array(128);
+	this.noteNames = [];
+	this._octaveMiddleC = 3;
+	this.set_tuningBase(440.0);
+};
+tones_utils_NoteFrequencyUtil.__name__ = true;
+tones_utils_NoteFrequencyUtil.prototype = {
+	reset: function() {
+		var _g = 0;
+		while(_g < 128) {
+			var i = _g++;
+			this.noteNames[i] = this.indexToName(i);
+			this.noteFrequencies[i] = this.get_tuningBase() * Math.pow(2,(i - 69.0) * 0.083333333333333329);
+		}
+	}
+	,noteIndexToFrequency: function(index) {
+		if(index >= 0 && index < 128) return this.noteFrequencies[index];
+		return NaN;
+	}
+	,indexToName: function(index) {
+		var pitch = index % 12;
+		var octave = (index * 0.083333333333333329 | 0) - (5 - this.get_octaveMiddleC());
+		var noteName = tones_utils_NoteFrequencyUtil.pitchNames[pitch] + octave;
+		if(tones_utils_NoteFrequencyUtil.altPitchNames[pitch] != null) noteName += "/" + tones_utils_NoteFrequencyUtil.altPitchNames[pitch] + octave;
+		return noteName;
+	}
+	,get_tuningBase: function() {
+		return this._tuningBase;
+	}
+	,set_tuningBase: function(value) {
+		this._tuningBase = value;
+		this.invTuningBase = 1.0 / (this._tuningBase * 0.5);
+		this.reset();
+		return this._tuningBase;
+	}
+	,get_octaveMiddleC: function() {
+		return this._octaveMiddleC;
+	}
+	,__class__: tones_utils_NoteFrequencyUtil
+};
 var tones_utils_TimeUtil = function() { };
 tones_utils_TimeUtil.__name__ = true;
 tones_utils_TimeUtil.get_frameTick = function() {

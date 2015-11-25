@@ -26,7 +26,6 @@ class NapeApplication extends Application {
 	
 	function new(domContainer:Element=null, space:Space = null, audioContext:AudioContext=null) {	
 		
-		backgroundColor = 0x0a0a1a;		
 		super();
 		
 		initNape(space);

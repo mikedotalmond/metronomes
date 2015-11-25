@@ -5,6 +5,7 @@ import haxe.Timer;
 import js.Browser;
 import js.html.audio.GainNode;
 import pixi.core.display.Container;
+import tones.utils.NoteFrequencyUtil;
 
 import nape.callbacks.CbEvent;
 import nape.callbacks.InteractionCallback;
@@ -32,8 +33,9 @@ class Main extends NapeApplication {
 	var outGain:GainNode;
 	
 	var noteIndex:Int = -1;
-	var notes:Array<Float> = [440, 330, 540, 720, 480, 444, 440, 330, 540, 720, 480, 444];
-	
+	var notes:Array<Int> = [69, 71, 72, 76, 69, 71, 72, 76];
+	var freqs:Array<Float> = [];
+	//
 	var container:Container;
 	
 	public function new() {
@@ -43,9 +45,12 @@ class Main extends NapeApplication {
 	
 	override function setup() {
 		
-		notes = [for (i in 0...12) {
-			220 + Math.random() * 660;
-		}];
+		var noteUtils = new NoteFrequencyUtil();
+		
+		
+		renderer.backgroundColor = 0x292B54;
+		
+		for (note in 0...notes.length) freqs.push(noteUtils.noteIndexToFrequency(notes[Std.int(Math.random()*notes.length)]));
 		
 		// setup pixi
 		container = new Container();
@@ -94,13 +99,13 @@ class Main extends NapeApplication {
 		metronomes = [];
 		var py = 240;
 		var px = 0;
-		for (i in 0...6) {
+		for (i in 0...2) {
 			metronomes[i] = new Metronome(i, px, py, space);
-			metronomes[i].setTuneAnchorPosition(0.5 + 0.005 * i);
+			metronomes[i].setTuneAnchorPosition(.05 - 0.005 * i);
 			container.addChild(metronomes[i].graphics);
-			px += 220;
+			px += 215;
 		}
-		
+			
 		//px = 0;
 		//py += 440;		
 		//for (i in 0...6) {
@@ -122,8 +127,8 @@ class Main extends NapeApplication {
 		
 		var m:Metronome = cb.int2.userData.metronome;
 		
-		m.tick();
-		tones.playFrequency(notes[m.tickIndex]);
+		m.tick(freqs.length);
+		tones.playFrequency(freqs[m.tickIndex]);
 	}
 	
 	
