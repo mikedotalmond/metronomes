@@ -1,16 +1,23 @@
 package;
 
+import haxe.macro.Type.FieldKind;
+import haxe.Timer;
 import js.Browser;
-import js.html.audio.AudioBuffer;
-import js.html.audio.AudioContext;
 import js.html.audio.GainNode;
-import pixi.plugins.app.Application;
+import pixi.core.display.Container;
+
+import nape.callbacks.CbEvent;
+import nape.callbacks.InteractionCallback;
+import nape.callbacks.InteractionListener;
+import nape.callbacks.InteractionType;
+import nape.geom.Vec2;
+import nape.space.Space;
+
+import napetools.NapeApplication;
 
 import tones.AudioBase;
 import tones.data.OscillatorType;
 import tones.Tones;
-import tones.utils.NoteFrequencyUtil;
-import tones.utils.TimeUtil;
 
 
 
@@ -19,52 +26,106 @@ import tones.utils.TimeUtil;
  * @author Mike Almond - https://github.com/mikedotalmond
  */
 
-class Main extends Application {
+class Main extends NapeApplication {
 
-	static function main()  new Main();
-	
 	var tones:Tones;
-	
-	var restartId:Int;
-	var buffer:AudioBuffer;
 	var outGain:GainNode;
-	var ctx:AudioContext;
+	
+	var noteIndex:Int = -1;
+	var notes:Array<Float> = [440, 330, 540, 720, 480, 444, 440, 330, 540, 720, 480, 444];
+	
+	var container:Container;
 	
 	public function new() {
+		super(Browser.document.getElementById('pixi-container'), new Space(Vec2.get(0, 9820)), AudioBase.createContext());
 		
-		super();
-		initPixi();
-		initAudio();
 	}
 	
-	function initPixi() {
-		backgroundColor = 0x0a0a1a;
-		start(null, Browser.document.getElementById('pixi-container'));
-	}
-	
-	function initAudio() {
+	override function setup() {
 		
+		notes = [for (i in 0...12) {
+			220 + Math.random() * 660;
+		}];
 		
-		ctx = AudioBase.createContext();
-		outGain = ctx.createGain();
+		// setup pixi
+		container = new Container();
+		stage.addChild(container);
+		container.scale.set(.75);
+		// setupAudio
+		outGain = audioContext.createGain();
 		outGain.gain.value = .7;
-		outGain.connect(ctx.destination);
+		outGain.connect(audioContext.destination);
 		
-		tones = new Tones(ctx, outGain);
-		tones.type = OscillatorType.SINE;
-		tones.attack = 0.01;
+		tones = new Tones(audioContext, outGain);
+		tones.type = OscillatorType.SQUARE;
+		tones.attack = 0.001;
 		tones.release = .1;
-		tones.volume = .25;
-		playSequence(0);
+		tones.volume = .01;	
+		
+		//
+		createMetronomes();
+		//container.scale.set(.8);
+		Timer.delay(resize, 1);
+		
+		Timer.delay(function() {
+			for (m in metronomes) m.applyStartForce();
+		}, 2500);
 	}
 	
-	function playSequence(delay:Float=0) {
-		tones.playFrequency(440, delay + TimeUtil.stepTime(.5));
-		tones.playFrequency(440, delay + TimeUtil.stepTime(1));
-		tones.playFrequency(440, delay + TimeUtil.stepTime(1.5));
-		tones.playFrequency(440, delay + TimeUtil.stepTime(2));
-		tones.playFrequency(440, delay + TimeUtil.stepTime(2.5));
-		tones.playFrequency(440, delay + TimeUtil.stepTime(3));
-		tones.playFrequency(440, delay + TimeUtil.stepTime(3.5));
+	override function updateSpace(dt:Float) {
+		for (m in metronomes) m.update(dt);
 	}
+	
+	override function draw(dt:Float) {
+		for (m in metronomes) m.draw(dt);
+	}
+	
+	override function resize() {
+		//container.scale.set();
+		//width / height;
+		
+		container.x = width / 2 - container.width / 2;
+		container.y = height / 2 - container.height / 2;
+	}
+	
+	
+	function createMetronomes() {
+		
+		metronomes = [];
+		var py = 240;
+		var px = 0;
+		for (i in 0...6) {
+			metronomes[i] = new Metronome(i, px, py, space);
+			metronomes[i].setTuneAnchorPosition(0.5 + 0.005 * i);
+			container.addChild(metronomes[i].graphics);
+			px += 220;
+		}
+		
+		//px = 0;
+		//py += 440;		
+		//for (i in 0...6) {
+			//metronomes[6+i] = new Metronome(i, px, py, space);
+			//metronomes[6+i].setTuneAnchorPosition(1 - 0.005 * i);
+			//container.addChild(metronomes[6+i].graphics);
+			//px += 220;
+		//}
+		
+		tickListener = new InteractionListener(CbEvent.BEGIN, InteractionType.SENSOR, Metronome.barCbType, Metronome.sensorCbType, tickSensorHandler);		
+		space.listeners.add(tickListener);
+	}
+	
+	var maxTickVelocity:Float = 1400;
+	var tickListener:InteractionListener;
+	var metronomes:Array<Metronome>;
+	
+	function tickSensorHandler(cb:InteractionCallback):Void {
+		
+		var m:Metronome = cb.int2.userData.metronome;
+		
+		m.tick();
+		tones.playFrequency(notes[m.tickIndex]);
+	}
+	
+	
+	static function main() new Main();
 }
