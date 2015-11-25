@@ -156,8 +156,8 @@ napetools_NapeApplication.prototype = $extend(pixi_plugins_app_Application.proto
 });
 var Main = function() {
 	this.freqs = [];
-	this.notes = [69,71,72,76,69,71,72,76];
-	napetools_NapeApplication.call(this,window.document.getElementById("pixi-container"),new nape_space_Space(nape_geom_Vec2.get(0,9820,null)),tones_AudioBase.createContext());
+	this.notes = [69,71,72,76,69,71,72,76,69,71,72,76];
+	napetools_NapeApplication.call(this,window.document.getElementById("pixi-container"),new nape_space_Space(nape_geom_Vec2.get(0,10000,null)),tones_AudioBase.createContext());
 };
 Main.__name__ = true;
 Main.main = function() {
@@ -182,7 +182,7 @@ Main.prototype = $extend(napetools_NapeApplication.prototype,{
 		this.outGain.gain.value = .7;
 		this.outGain.connect(this.audioContext.destination);
 		this.tones = new tones_Tones(this.audioContext,this.outGain);
-		this.tones.type = window.OscillatorTypeShim.SQUARE;
+		this.tones.type = window.OscillatorTypeShim.SAWTOOTH;
 		this.tones.set_attack(0.001);
 		this.tones.set_release(.1);
 		this.tones.set_volume(.01);
@@ -225,10 +225,10 @@ Main.prototype = $extend(napetools_NapeApplication.prototype,{
 		var py = 240;
 		var px = 0;
 		var _g = 0;
-		while(_g < 2) {
+		while(_g < 3) {
 			var i = _g++;
 			this.metronomes[i] = new Metronome(i,px,py,this.space);
-			this.metronomes[i].setTuneAnchorPosition(.05 - 0.005 * i);
+			this.metronomes[i].setTuneAnchorPosition(.05 - 0.01 * i);
 			this.container.addChild(this.metronomes[i].graphics);
 			px += 215;
 		}

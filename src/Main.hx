@@ -33,13 +33,13 @@ class Main extends NapeApplication {
 	var outGain:GainNode;
 	
 	var noteIndex:Int = -1;
-	var notes:Array<Int> = [69, 71, 72, 76, 69, 71, 72, 76];
+	var notes:Array<Int> = [69, 71, 72, 76, 69, 71, 72, 76,69, 71, 72, 76];
 	var freqs:Array<Float> = [];
 	//
 	var container:Container;
 	
 	public function new() {
-		super(Browser.document.getElementById('pixi-container'), new Space(Vec2.get(0, 9820)), AudioBase.createContext());
+		super(Browser.document.getElementById('pixi-container'), new Space(Vec2.get(0, 10000)), AudioBase.createContext());
 		
 	}
 	
@@ -62,7 +62,7 @@ class Main extends NapeApplication {
 		outGain.connect(audioContext.destination);
 		
 		tones = new Tones(audioContext, outGain);
-		tones.type = OscillatorType.SQUARE;
+		tones.type = OscillatorType.SAWTOOTH;
 		tones.attack = 0.001;
 		tones.release = .1;
 		tones.volume = .01;	
@@ -99,9 +99,9 @@ class Main extends NapeApplication {
 		metronomes = [];
 		var py = 240;
 		var px = 0;
-		for (i in 0...2) {
+		for (i in 0...3) {
 			metronomes[i] = new Metronome(i, px, py, space);
-			metronomes[i].setTuneAnchorPosition(.05 - 0.005 * i);
+			metronomes[i].setTuneAnchorPosition(.05 - 0.01 * i);
 			container.addChild(metronomes[i].graphics);
 			px += 215;
 		}
