@@ -10,15 +10,15 @@ import js.html.Element;
 import nape.geom.Vec2;
 import nape.space.Space;
 import pixi.plugins.app.Application;
-
 import tones.AudioBase;
+
 
 class NapeApplication extends Application { 
 	
 	static public var FixedTimeStep					:Float	= 1.0 / 60.0;
-	static public var PositionIterationsPerTimeStep	:Int 	= 48;
-	static public var VelocityIterationsPerTimeStep	:Int 	= 32;
-	
+	static public var VelocityIterationsPerTimeStep	:Int 	= 10; // In this stage, we are solving all the constraints and contacts to resolve errors in velocities of objects. This is the most important stage in solving the physics system. The default value is 10
+	static public var PositionIterationsPerTimeStep	:Int 	= 10; // In this stage, we are solving all the constraints and contacts to resolve errors in positions of objects that remain after having solved for velocity errors, and integrated the positions of objects. This stage is necessary to resolve penetrations between objects, and to resolve positional errors of stiff constraints. Position iterations are lighter-weight than velocity iterations and the default value is 10 
+
 	public var space		(default, null):Space;
 	public var audioContext	(default, null):AudioContext;
 	

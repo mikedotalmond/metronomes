@@ -1,6 +1,7 @@
 package;
 
 import haxe.Timer;
+import hxColorToolkit.spaces.RGB;
 import nape.shape.Polygon;
 import pixi.plugins.NapeHelpers;
 
@@ -137,10 +138,9 @@ class Metronome {
 		tuneWeld.damping = 0;
 		
 		// sensor
-		var tickSensorShape = new Circle(1);
+		var tickSensorShape = new Circle(.01);
 		tickSensorShape.sensorEnabled = true;
-		
-		tickSensor = new Body(BodyType.KINEMATIC, Vec2.weak(_x, _y - BAR_LENGTH / 2));
+		tickSensor = new Body(BodyType.KINEMATIC, Vec2.weak(_x, _y + BAR_LENGTH / 2)); // sense ticks when the bottom of the bar crosses zero
 		tickSensor.shapes.add(tickSensorShape);
 		tickSensor.group = bar.group;
 		tickSensor.compound = compound;
@@ -165,29 +165,43 @@ class Metronome {
 	public function tick(n:Int) {
 		
 		tickIndex = (tickIndex + 1) % n;
-
+		
 		var v = massVelocityX;
 		massBall.applyImpulse(Vec2.weak(42 * (v > 0?1: -1), 0));
 		
+		tp = 0;
+		ballColour.setColor(0xfD1414);
+		
 		ticked = true;
-	}
-	
-	public function update(dt:Float) {
 		
 	}
 	
+	var ballColour:RGB = new RGB();
+	var ballOn:RGB = new RGB().setColor(0xfD1414);
+	var ballOff:RGB = new RGB().setColor(0x6A1313);
+	var tp:Float = 0;
+	
+	public function update(dt:Float) {
+		 if(tp < 1) {
+			tp += .1;
+			ballColour = ballOn.interpolate(ballOff, tp);
+		}
+	}	
+	
 	public function draw(dt:Float) {
+		
+		if (ticked) {
+			
+		} 
 		
 		graphics.clear();
 		
 		var v = tickIndex / 24;
-		var c = Std.int((v * .75) * 0xff);
-		c = c << 16;// | (c >> 1) << 8 | (c >> 1);
-		
-		var poly:Polygon = bar.shapes.at(0).castPolygon;
-		var vertices = poly.worldVerts;
+		var c = Std.int((v * 1) * 0xff) << 16;
+		var vertices = bar.shapes.at(0).castPolygon.worldVerts;
 		var position = vertices.at(0);
 		
+		// bar
 		graphics.beginFill(c);
 		graphics.moveTo(position.x, position.y);
 		for (i in 1...vertices.length) {
@@ -199,7 +213,8 @@ class Metronome {
 		graphics.endFill();
 		
 		// mass ball
-		c = ticked ? 0xfD1414 : 0x380A0A;
+		//c = ticked ? 0xfD1414 : 0x380A0A;
+		c = ballColour.getColor();
 		graphics.beginFill(c);
 		graphics.drawCircle(massBall.position.x, massBall.position.y, 32);
 		graphics.endFill();

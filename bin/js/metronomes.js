@@ -161,6 +161,9 @@ var Main = function() {
 	this.phase = -Math.PI / 2;
 	this.freqs = [];
 	this.notes = [];
+	pixi_plugins_app_NapeApplication.FixedTimeStep = 0.016666666666666666;
+	pixi_plugins_app_NapeApplication.VelocityIterationsPerTimeStep = 20;
+	pixi_plugins_app_NapeApplication.PositionIterationsPerTimeStep = 20;
 	this.noteUtils = new tones_utils_NoteFrequencyUtil();
 	pixi_plugins_app_NapeApplication.call(this,window.document.getElementById("pixi-container"),new nape_space_Space(nape_geom_Vec2.get(0,10000,null)),tones_AudioBase.createContext());
 };
@@ -275,7 +278,7 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		this.tones.set_release(.2 + (1 - x) * .5);
 		if(m.index > 1) {
 			var _g = this.tones;
-			_g.set_volume(_g._volume * .85);
+			_g.set_volume(_g._volume * .8);
 		}
 		f = this.noteUtils.detune(f,1200 * (m.index / 2 | 0) + (Math.random() - .5) * 16);
 		this.tones.playFrequency(f);
@@ -999,6 +1002,10 @@ zpp_$nape_util_ZNPList_$ZPP_$CbSet.prototype = {
 	,__class__: zpp_$nape_util_ZNPList_$ZPP_$CbSet
 };
 var Metronome = function(index,x,y,space) {
+	this.tp = 0;
+	this.ballOff = new hxColorToolkit_spaces_RGB().setColor(6951699);
+	this.ballOn = new hxColorToolkit_spaces_RGB().setColor(16585748);
+	this.ballColour = new hxColorToolkit_spaces_RGB();
 	this.tickIndex = -1;
 	this.ticked = false;
 	this.index = index;
@@ -1109,7 +1116,7 @@ Metronome.prototype = {
 		this.tuneWeld.set_ignore(true);
 		this.tuneWeld.set_stiff(true);
 		this.tuneWeld.set_damping(0);
-		var tickSensorShape = new nape_shape_Circle(1);
+		var tickSensorShape = new nape_shape_Circle(.01);
 		tickSensorShape.zpp_inner.immutable_midstep("Shape::sensorEnabled");
 		tickSensorShape.zpp_inner.sensorEnabled = true;
 		tickSensorShape.zpp_inner.wake();
@@ -1123,7 +1130,7 @@ Metronome.prototype = {
 			}
 			$r = zpp_$nape_util_ZPP_$Flags.BodyType_KINEMATIC;
 			return $r;
-		}(this)),nape_geom_Vec2.get(this._x,this._y - 150.,true));
+		}(this)),nape_geom_Vec2.get(this._x,this._y + 150.,true));
 		this.tickSensor.zpp_inner.wrap_shapes.add(tickSensorShape);
 		this.tickSensor.set_group(this.bar.get_group());
 		this.tickSensor.set_compound(compound);
@@ -1142,19 +1149,23 @@ Metronome.prototype = {
 		this.tickIndex = (this.tickIndex + 1) % n;
 		var v = this.massBall.get_velocity().get_x();
 		this.massBall.applyImpulse(nape_geom_Vec2.get(42 * (v > 0?1:-1),0,true));
+		this.tp = 0;
+		this.ballColour.setColor(16585748);
 		this.ticked = true;
 	}
 	,update: function(dt) {
+		if(this.tp < 1) {
+			this.tp += .1;
+			this.ballColour = this.ballOn.interpolate(this.ballOff,this.tp);
+		}
 	}
 	,draw: function(dt) {
+		if(this.ticked) {
+		}
 		this.graphics.clear();
 		var v = this.tickIndex / 24;
-		var c = v * .75 * 255 | 0;
-		c = c << 16;
-		var poly = this.bar.zpp_inner.wrap_shapes.at(0).get_castPolygon();
-		var vertices;
-		if(poly.zpp_inner_zn.wrap_gverts == null) poly.zpp_inner_zn.getgverts();
-		vertices = poly.zpp_inner_zn.wrap_gverts;
+		var c = (v * 255 | 0) << 16;
+		var vertices = this.bar.zpp_inner.wrap_shapes.at(0).get_castPolygon().get_worldVerts();
 		var position = vertices.at(0);
 		this.graphics.beginFill(c);
 		this.graphics.moveTo((function($this) {
@@ -1204,7 +1215,7 @@ Metronome.prototype = {
 			return $r;
 		}(this)));
 		this.graphics.endFill();
-		if(this.ticked) c = 16585748; else c = 3672586;
+		c = this.ballColour.getColor();
 		this.graphics.beginFill(c);
 		this.graphics.drawCircle(this.massBall.get_position().get_x(),this.massBall.get_position().get_y(),32);
 		this.graphics.endFill();
@@ -1428,6 +1439,78 @@ haxe_ds_ObjectMap.prototype = {
 		}};
 	}
 	,__class__: haxe_ds_ObjectMap
+};
+var hxColorToolkit_spaces_Color = function() { };
+hxColorToolkit_spaces_Color.__name__ = true;
+hxColorToolkit_spaces_Color.prototype = {
+	__class__: hxColorToolkit_spaces_Color
+};
+var hxColorToolkit_spaces_RGB = function(r,g,b) {
+	if(b == null) b = 0;
+	if(g == null) g = 0;
+	if(r == null) r = 0;
+	this.numOfChannels = 3;
+	this.data = [];
+	this.set_red(r);
+	this.set_green(g);
+	this.set_blue(b);
+};
+hxColorToolkit_spaces_RGB.__name__ = true;
+hxColorToolkit_spaces_RGB.__interfaces__ = [hxColorToolkit_spaces_Color];
+hxColorToolkit_spaces_RGB.prototype = {
+	getValue: function(channel) {
+		return this.data[channel];
+	}
+	,setValue: function(channel,val) {
+		this.data[channel] = Math.min(255,Math.max(val,0));
+		return val;
+	}
+	,get_red: function() {
+		return this.getValue(0);
+	}
+	,set_red: function(value) {
+		return this.setValue(0,value);
+	}
+	,get_green: function() {
+		return this.getValue(1);
+	}
+	,set_green: function(value) {
+		return this.setValue(1,value);
+	}
+	,get_blue: function() {
+		return this.getValue(2);
+	}
+	,set_blue: function(value) {
+		return this.setValue(2,value);
+	}
+	,toRGB: function() {
+		return this.clone();
+	}
+	,getColor: function() {
+		return Math.round(this.get_red()) << 16 | Math.round(this.get_green()) << 8 | Math.round(this.get_blue());
+	}
+	,fromRGB: function(rgb) {
+		this.set_red(rgb.get_red());
+		this.set_green(rgb.get_green());
+		this.set_blue(rgb.get_blue());
+		return this;
+	}
+	,setColor: function(color) {
+		this.set_red(color >> 16 & 255);
+		this.set_green(color >> 8 & 255);
+		this.set_blue(color & 255);
+		return this;
+	}
+	,clone: function() {
+		return new hxColorToolkit_spaces_RGB(this.get_red(),this.get_green(),this.get_blue());
+	}
+	,interpolate: function(target,ratio) {
+		if(ratio == null) ratio = 0.5;
+		var target1;
+		if(js_Boot.__instanceof(target,hxColorToolkit_spaces_RGB)) target1 = target; else target1 = new hxColorToolkit_spaces_RGB().fromRGB(target.toRGB());
+		return new hxColorToolkit_spaces_RGB(this.get_red() + (target1.get_red() - this.get_red()) * ratio,this.get_green() + (target1.get_green() - this.get_green()) * ratio,this.get_blue() + (target1.get_blue() - this.get_blue()) * ratio);
+	}
+	,__class__: hxColorToolkit_spaces_RGB
 };
 var hxsignal_ConnectionTimes = { __ename__ : true, __constructs__ : ["Once","Times","Forever"] };
 hxsignal_ConnectionTimes.Once = ["Once",0];
@@ -5474,7 +5557,11 @@ nape_shape_Polygon.rect = function(x,y,width,height,weak) {
 };
 nape_shape_Polygon.__super__ = nape_shape_Shape;
 nape_shape_Polygon.prototype = $extend(nape_shape_Shape.prototype,{
-	__class__: nape_shape_Polygon
+	get_worldVerts: function() {
+		if(this.zpp_inner_zn.wrap_gverts == null) this.zpp_inner_zn.getgverts();
+		return this.zpp_inner_zn.wrap_gverts;
+	}
+	,__class__: nape_shape_Polygon
 });
 var nape_shape_ShapeIterator = function() {
 	this.zpp_next = null;
@@ -21183,8 +21270,8 @@ if(node != null) {
 tones_utils_TimeUtil._frameTick = new hxsignal_impl_Signal1();
 window.requestAnimationFrame(tones_utils_TimeUtil.onFrame);
 pixi_plugins_app_NapeApplication.FixedTimeStep = 0.016666666666666666;
-pixi_plugins_app_NapeApplication.PositionIterationsPerTimeStep = 48;
-pixi_plugins_app_NapeApplication.VelocityIterationsPerTimeStep = 32;
+pixi_plugins_app_NapeApplication.VelocityIterationsPerTimeStep = 10;
+pixi_plugins_app_NapeApplication.PositionIterationsPerTimeStep = 10;
 zpp_$nape_callbacks_ZPP_$CbType.ANY_SHAPE = new nape_callbacks_CbType();
 zpp_$nape_callbacks_ZPP_$CbType.ANY_BODY = new nape_callbacks_CbType();
 zpp_$nape_callbacks_ZPP_$CbType.ANY_COMPOUND = new nape_callbacks_CbType();

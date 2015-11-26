@@ -42,6 +42,11 @@ class Main extends NapeApplication {
 	
 	
 	public function new() {
+		
+		NapeApplication.FixedTimeStep = 1 / 60;
+		NapeApplication.VelocityIterationsPerTimeStep = 20;
+		NapeApplication.PositionIterationsPerTimeStep = 20;
+		
 		noteUtils = new NoteFrequencyUtil();
 		super(Browser.document.getElementById('pixi-container'), new Space(Vec2.get(0, 10000)), AudioBase.createContext());
 	}
@@ -130,7 +135,7 @@ class Main extends NapeApplication {
 		tones.attack = .005 + (1-x) * (1-x) * .5;
 		tones.release = .2 + (1 - x) * .5;
 		
-		if (m.index > 1) tones.volume *= .85;
+		if (m.index > 1) tones.volume *= .8;
 		
 		f = noteUtils.detune(f, 1200 * Std.int(m.index/2) + NapeHelpers.rRange(8));
 		
