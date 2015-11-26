@@ -160,14 +160,9 @@ class Metronome {
 		massBall.applyImpulse(Vec2.weak(8192, 0));
 	}
 	
-	public var playCount(default,null):Int = 0;
+	public var playCount:Int = 0;
 	public var tickIndex(default,null):Int = -1;
 	public function tick(n:Int) {
-		
-		if (tickIndex == n-1) {
-			setTuneAnchorPosition(.001 + index * 0.005 + (playCount / (n*2)));
-			playCount = (playCount + 1) % n;
-		}
 		
 		tickIndex = (tickIndex + 1) % n;
 
@@ -204,7 +199,7 @@ class Metronome {
 		graphics.endFill();
 		
 		// mass ball
-		c = ticked ? 0xfD1414 : 0x5A1010;
+		c = ticked ? 0xfD1414 : 0x380A0A;
 		graphics.beginFill(c);
 		graphics.drawCircle(massBall.position.x, massBall.position.y, 32);
 		graphics.endFill();

@@ -16,7 +16,7 @@ import tones.AudioBase;
 class NapeApplication extends Application { 
 	
 	static public var FixedTimeStep					:Float	= 1.0 / 60.0;
-	static public var PositionIterationsPerTimeStep	:Int 	= 32;
+	static public var PositionIterationsPerTimeStep	:Int 	= 48;
 	static public var VelocityIterationsPerTimeStep	:Int 	= 32;
 	
 	public var space		(default, null):Space;
@@ -34,10 +34,8 @@ class NapeApplication extends Application {
 		
 		setup();
 		
-		onUpdate = tick;
 		onResize = resize;
-		
-		resize();
+		onUpdate = firstTick;
 	}
 	
 	
@@ -58,6 +56,14 @@ class NapeApplication extends Application {
 		this.audioContext = audioContext;
 	}
 	
+	// draw once - resize - start rendering properly
+	function firstTick(dt:Float) {
+		stage.visible = false;
+		tick(dt);
+		resize();
+		onUpdate = tick;
+		stage.visible = true;
+	}
 	
 	function tick(dt:Float) {
 		updateSpace(dt);

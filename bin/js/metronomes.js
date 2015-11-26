@@ -113,9 +113,8 @@ var pixi_plugins_app_NapeApplication = function(domContainer,space,audioContext)
 	this.initPixi(domContainer);
 	this.initAudio(audioContext);
 	this.setup();
-	this.onUpdate = $bind(this,this.tick);
 	this.onResize = $bind(this,this.resize);
-	this.resize();
+	this.onUpdate = $bind(this,this.firstTick);
 };
 pixi_plugins_app_NapeApplication.__name__ = true;
 pixi_plugins_app_NapeApplication.__super__ = pixi_plugins_app_Application;
@@ -131,6 +130,13 @@ pixi_plugins_app_NapeApplication.prototype = $extend(pixi_plugins_app_Applicatio
 	,initAudio: function(audioContext) {
 		if(audioContext == null) audioContext = tones_AudioBase.createContext();
 		this.audioContext = audioContext;
+	}
+	,firstTick: function(dt) {
+		this.stage.visible = false;
+		this.tick(dt);
+		this.resize();
+		this.onUpdate = $bind(this,this.tick);
+		this.stage.visible = true;
 	}
 	,tick: function(dt) {
 		this.updateSpace(dt);
@@ -152,6 +158,8 @@ pixi_plugins_app_NapeApplication.prototype = $extend(pixi_plugins_app_Applicatio
 	,__class__: pixi_plugins_app_NapeApplication
 });
 var Main = function() {
+	this.phase = -Math.PI / 2;
+	this.playCount = 0;
 	this.freqs = [];
 	this.notes = [];
 	this.noteUtils = new tones_utils_NoteFrequencyUtil();
@@ -165,12 +173,15 @@ Main.__super__ = pixi_plugins_app_NapeApplication;
 Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 	setup: function() {
 		var _g1 = this;
-		this.renderer.backgroundColor = 1842487;
+		this.container = new PIXI.Container();
+		this.stage.addChild(this.container);
+		this.container.scale.set(.75);
+		this.renderer.backgroundColor = 1052703;
 		var _g = [];
 		var _g11 = 0;
 		while(_g11 < 12) {
 			var i = _g11++;
-			_g.push(32 + Std["int"](Math.random() * 18));
+			_g.push(48 + Std["int"](Math.random() * 16));
 		}
 		this.notes = _g;
 		var _g2 = 0;
@@ -179,9 +190,6 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 			var note = _g2++;
 			this.freqs.push(this.noteUtils.noteIndexToFrequency(this.notes[Std["int"](Math.random() * this.notes.length)]));
 		}
-		this.container = new PIXI.Container();
-		this.stage.addChild(this.container);
-		this.container.scale.set(.75);
 		this.outGain = this.audioContext.createGain();
 		this.outGain.gain.value = 1.0;
 		this.outGain.connect(this.audioContext.destination);
@@ -191,7 +199,6 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		this.tones.set_release(0.25);
 		this.tones.set_volume(0);
 		this.createMetronomes();
-		haxe_Timer.delay($bind(this,this.resize),1);
 		haxe_Timer.delay(function() {
 			var _g21 = 0;
 			var _g3 = _g1.metronomes;
@@ -209,6 +216,8 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 			var m = _g1[_g];
 			++_g;
 			m.update(dt);
+			this.phase += .0001;
+			m.setTuneAnchorPosition(.01 + .01 * m.index + .48 * (Math.sin(this.phase) + 1));
 		}
 	}
 	,draw: function(dt) {
@@ -229,7 +238,7 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		var py = 240;
 		var px = 0;
 		var _g = 0;
-		while(_g < 5) {
+		while(_g < 9) {
 			var i = _g++;
 			this.metronomes[i] = new Metronome(i,px,py,this.space);
 			this.metronomes[i].setTuneAnchorPosition(.001 + 0.01 * i);
@@ -259,12 +268,18 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 	}
 	,tickSensorHandler: function(cb) {
 		var m = cb.zpp_inner.int2.outer_i.get_userData().metronome;
+		var n = this.freqs.length;
+		if(m.index == 0 && m.tickIndex == n - 1) {
+			var r = .01 + Math.random() * Math.random() * .99;
+			this.playCount = (this.playCount + 1) % n;
+		}
 		m.tick(this.freqs.length);
 		var f = this.freqs[m.tickIndex];
-		var n = 1 - m.index / this.metronomes.length;
-		this.tones.set_volume(.025 + .5 * n * n * n * n);
-		this.tones.set_attack(.005 + (1 - n) * (1 - n) * .5);
-		f = this.noteUtils.detune(f,1200 * m.index + (Math.random() - .5) * 8);
+		var x = 1 - m.index / this.metronomes.length;
+		this.tones.set_volume(.025 + .5 * x * x * x * x);
+		this.tones.set_attack(.005 + (1 - x) * (1 - x) * .5);
+		this.tones.set_release(.2 + (1 - x) * .25);
+		f = this.noteUtils.detune(f,300 * m.index + (Math.random() - .5) * 8);
 		this.tones.playFrequency(f);
 	}
 	,__class__: Main
@@ -987,7 +1002,6 @@ zpp_$nape_util_ZNPList_$ZPP_$CbSet.prototype = {
 };
 var Metronome = function(index,x,y,space) {
 	this.tickIndex = -1;
-	this.playCount = 0;
 	this.ticked = false;
 	this.index = index;
 	this.space = space;
@@ -1127,10 +1141,6 @@ Metronome.prototype = {
 		this.massBall.applyImpulse(nape_geom_Vec2.get(8192,0,true));
 	}
 	,tick: function(n) {
-		if(this.tickIndex == n - 1) {
-			this.setTuneAnchorPosition(.001 + this.index * 0.005 + this.playCount / (n * 2));
-			this.playCount = (this.playCount + 1) % n;
-		}
 		this.tickIndex = (this.tickIndex + 1) % n;
 		var v = this.massBall.get_velocity().get_x();
 		this.massBall.applyImpulse(nape_geom_Vec2.get(42 * (v > 0?1:-1),0,true));
@@ -1196,7 +1206,7 @@ Metronome.prototype = {
 			return $r;
 		}(this)));
 		this.graphics.endFill();
-		if(this.ticked) c = 16585748; else c = 5902352;
+		if(this.ticked) c = 16585748; else c = 3672586;
 		this.graphics.beginFill(c);
 		this.graphics.drawCircle(this.massBall.get_position().get_x(),this.massBall.get_position().get_y(),32);
 		this.graphics.endFill();
@@ -5748,7 +5758,7 @@ pixi_plugins_NapeHelpers.createBox = function(type,x,y,w,h) {
 	b.zpp_inner.wrap_shapes.add(new nape_shape_Polygon(nape_shape_Polygon.rect(0,0,w,h)));
 	var pivot = ((function($this) {
 		var $r;
-		if(b.zpp_inner.world) throw new js__$Boot_HaxeError(new js__$Boot_HaxeError("Error: Space::world has no " + "localCOM"));
+		if(b.zpp_inner.world) throw new js__$Boot_HaxeError("Error: Space::world has no " + "localCOM");
 		if(b.zpp_inner.wrap_localCOM == null) {
 			b.zpp_inner.wrap_localCOM = nape_geom_Vec2.get(b.zpp_inner.localCOMx,b.zpp_inner.localCOMy,null);
 			b.zpp_inner.wrap_localCOM.zpp_inner._inuse = true;
@@ -21175,7 +21185,7 @@ if(node != null) {
 tones_utils_TimeUtil._frameTick = new hxsignal_impl_Signal1();
 window.requestAnimationFrame(tones_utils_TimeUtil.onFrame);
 pixi_plugins_app_NapeApplication.FixedTimeStep = 0.016666666666666666;
-pixi_plugins_app_NapeApplication.PositionIterationsPerTimeStep = 32;
+pixi_plugins_app_NapeApplication.PositionIterationsPerTimeStep = 48;
 pixi_plugins_app_NapeApplication.VelocityIterationsPerTimeStep = 32;
 zpp_$nape_callbacks_ZPP_$CbType.ANY_SHAPE = new nape_callbacks_CbType();
 zpp_$nape_callbacks_ZPP_$CbType.ANY_BODY = new nape_callbacks_CbType();
