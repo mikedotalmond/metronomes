@@ -35,6 +35,12 @@ class Main extends NapeApplication {
 	//
 	var container:Container;
 	
+	var tickListener:InteractionListener;
+	var metronomes:Array<Metronome>;
+	var noteUtils:tones.utils.NoteFrequencyUtil;
+	var phase:Float = -Math.PI / 2;
+	
+	
 	public function new() {
 		noteUtils = new NoteFrequencyUtil();
 		super(Browser.document.getElementById('pixi-container'), new Space(Vec2.get(0, 10000)), AudioBase.createContext());
@@ -109,24 +115,11 @@ class Main extends NapeApplication {
 		space.listeners.add(tickListener);
 	}
 	
-	var maxTickVelocity:Float = 1400;
-	var tickListener:InteractionListener;
-	var metronomes:Array<Metronome>;
-	var noteUtils:tones.utils.NoteFrequencyUtil;
-	var playCount:Int = 0;
-	var phase:Float = -Math.PI/2;
+
 	function tickSensorHandler(cb:InteractionCallback):Void {
 		
 		var m:Metronome = cb.int2.userData.metronome;
 		
-		var n = freqs.length;
-		if (m.index==0 && m.tickIndex == n-1) {
-			var r = .01 + Math.random() * Math.random() * .99;
-			//for (mm in metronomes) mm.setTuneAnchorPosition(r + (mm.index * .01));
-			//for (m in metronomes) m.setTuneAnchorPosition(1 - (.001 + m.index * 0.005 + (playCount / (n * 1.5))));			
-			playCount = (playCount + 1) % n;
-		}
-			
 		m.tick(freqs.length);
 		
 		var f = freqs[m.tickIndex];

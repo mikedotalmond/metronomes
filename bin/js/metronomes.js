@@ -159,7 +159,6 @@ pixi_plugins_app_NapeApplication.prototype = $extend(pixi_plugins_app_Applicatio
 });
 var Main = function() {
 	this.phase = -Math.PI / 2;
-	this.playCount = 0;
 	this.freqs = [];
 	this.notes = [];
 	this.noteUtils = new tones_utils_NoteFrequencyUtil();
@@ -268,11 +267,6 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 	}
 	,tickSensorHandler: function(cb) {
 		var m = cb.zpp_inner.int2.outer_i.get_userData().metronome;
-		var n = this.freqs.length;
-		if(m.index == 0 && m.tickIndex == n - 1) {
-			var r = .01 + Math.random() * Math.random() * .99;
-			this.playCount = (this.playCount + 1) % n;
-		}
 		m.tick(this.freqs.length);
 		var f = this.freqs[m.tickIndex];
 		var x = 1 - m.index / this.metronomes.length;
