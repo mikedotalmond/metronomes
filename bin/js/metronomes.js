@@ -191,7 +191,7 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 			this.freqs.push(this.noteUtils.noteIndexToFrequency(this.notes[Std["int"](Math.random() * this.notes.length)]));
 		}
 		this.outGain = this.audioContext.createGain();
-		this.outGain.gain.value = 1.0;
+		this.outGain.gain.value = .5;
 		this.outGain.connect(this.audioContext.destination);
 		this.tones = new tones_Tones(this.audioContext,this.outGain);
 		this.tones.type = window.OscillatorTypeShim.SAWTOOTH;
@@ -281,7 +281,7 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		this.tones.set_release(.2 + (1 - x) * .5);
 		if(m.index > 1) {
 			var _g = this.tones;
-			_g.set_volume(_g._volume * .8);
+			_g.set_volume(_g._volume * .85);
 		}
 		f = this.noteUtils.detune(f,1200 * (m.index / 2 | 0) + (Math.random() - .5) * 16);
 		this.tones.playFrequency(f);

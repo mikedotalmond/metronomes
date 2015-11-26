@@ -55,7 +55,7 @@ class Main extends NapeApplication {
 		for (note in 0...notes.length) freqs.push(noteUtils.noteIndexToFrequency(notes[Std.int(Math.random()*notes.length)]));
 		
 		outGain = audioContext.createGain();
-		outGain.gain.value = 1.0;
+		outGain.gain.value = .5;
 		outGain.connect(audioContext.destination);
 		
 		tones = new Tones(audioContext, outGain);
@@ -137,7 +137,7 @@ class Main extends NapeApplication {
 		tones.attack = .005 + (1-x) * (1-x) * .5;
 		tones.release = .2 + (1 - x) * .5;
 		
-		if (m.index > 1) tones.volume *= .8;
+		if (m.index > 1) tones.volume *= .85;
 		
 		f = noteUtils.detune(f, 1200 * Std.int(m.index/2) + NapeHelpers.rRange(8));
 		
