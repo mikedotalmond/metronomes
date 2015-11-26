@@ -165,12 +165,12 @@ Main.__super__ = pixi_plugins_app_NapeApplication;
 Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 	setup: function() {
 		var _g1 = this;
-		this.renderer.backgroundColor = 2698068;
+		this.renderer.backgroundColor = 1842487;
 		var _g = [];
 		var _g11 = 0;
 		while(_g11 < 12) {
 			var i = _g11++;
-			_g.push(63 + Std["int"](Math.random() * 18));
+			_g.push(32 + Std["int"](Math.random() * 18));
 		}
 		this.notes = _g;
 		var _g2 = 0;
@@ -187,9 +187,9 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		this.outGain.connect(this.audioContext.destination);
 		this.tones = new tones_Tones(this.audioContext,this.outGain);
 		this.tones.type = window.OscillatorTypeShim.SAWTOOTH;
-		this.tones.set_attack(0.05);
-		this.tones.set_release(0.5);
-		this.tones.set_volume(.5);
+		this.tones.set_attack(0.02);
+		this.tones.set_release(0.25);
+		this.tones.set_volume(0);
 		this.createMetronomes();
 		haxe_Timer.delay($bind(this,this.resize),1);
 		haxe_Timer.delay(function() {
@@ -229,7 +229,7 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		var py = 240;
 		var px = 0;
 		var _g = 0;
-		while(_g < 2) {
+		while(_g < 5) {
 			var i = _g++;
 			this.metronomes[i] = new Metronome(i,px,py,this.space);
 			this.metronomes[i].setTuneAnchorPosition(.001 + 0.01 * i);
@@ -261,7 +261,11 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		var m = cb.zpp_inner.int2.outer_i.get_userData().metronome;
 		m.tick(this.freqs.length);
 		var f = this.freqs[m.tickIndex];
-		this.tones.playFrequency(this.noteUtils.detune(f,Std["int"]((Math.random() - .5) * 66)));
+		var n = 1 - m.index / this.metronomes.length;
+		this.tones.set_volume(.025 + .5 * n * n * n * n);
+		this.tones.set_attack(.005 + (1 - n) * (1 - n) * .5);
+		f = this.noteUtils.detune(f,1200 * m.index + (Math.random() - .5) * 8);
+		this.tones.playFrequency(f);
 	}
 	,__class__: Main
 });
@@ -983,6 +987,7 @@ zpp_$nape_util_ZNPList_$ZPP_$CbSet.prototype = {
 };
 var Metronome = function(index,x,y,space) {
 	this.tickIndex = -1;
+	this.playCount = 0;
 	this.ticked = false;
 	this.index = index;
 	this.space = space;
@@ -1122,6 +1127,10 @@ Metronome.prototype = {
 		this.massBall.applyImpulse(nape_geom_Vec2.get(8192,0,true));
 	}
 	,tick: function(n) {
+		if(this.tickIndex == n - 1) {
+			this.setTuneAnchorPosition(.001 + this.index * 0.005 + this.playCount / (n * 2));
+			this.playCount = (this.playCount + 1) % n;
+		}
 		this.tickIndex = (this.tickIndex + 1) % n;
 		var v = this.massBall.get_velocity().get_x();
 		this.massBall.applyImpulse(nape_geom_Vec2.get(42 * (v > 0?1:-1),0,true));
@@ -1131,9 +1140,9 @@ Metronome.prototype = {
 	}
 	,draw: function(dt) {
 		this.graphics.clear();
-		var v = this.tickIndex / 12;
-		var c = v * .9 * 255 | 0;
-		c = c << 16 | c >> 1 << 8 | c >> 1;
+		var v = this.tickIndex / 24;
+		var c = v * .75 * 255 | 0;
+		c = c << 16;
 		var poly = this.bar.zpp_inner.wrap_shapes.at(0).get_castPolygon();
 		var vertices;
 		if(poly.zpp_inner_zn.wrap_gverts == null) poly.zpp_inner_zn.getgverts();
@@ -1191,10 +1200,10 @@ Metronome.prototype = {
 		this.graphics.beginFill(c);
 		this.graphics.drawCircle(this.massBall.get_position().get_x(),this.massBall.get_position().get_y(),32);
 		this.graphics.endFill();
-		this.graphics.beginFill(16059918);
+		this.graphics.beginFill(3932674);
 		this.graphics.drawCircle(this.pivotBall.get_position().get_x(),this.pivotBall.get_position().get_y(),8);
 		this.graphics.endFill();
-		this.graphics.beginFill(16298417);
+		this.graphics.beginFill(6555913);
 		this.graphics.drawCircle(this.tuneWeight.get_position().get_x(),this.tuneWeight.get_position().get_y(),16);
 		this.graphics.endFill();
 		this.ticked = false;
@@ -5779,7 +5788,7 @@ var tones_AudioBase = function(audioContext,destinationNode) {
 	this.lastTime = .0;
 	this.ID = 0;
 	if(audioContext == null) this.context = tones_AudioBase.createContext(); else this.context = audioContext;
-	this.sampleTime = 1.0 / audioContext.sampleRate;
+	this.sampleTime = 1.0 / this.context.sampleRate;
 	if(destinationNode == null) this.destination = this.context.destination; else this.destination = destinationNode;
 	this.delayedBegin = [];
 	this.delayedRelease = [];
@@ -5891,6 +5900,15 @@ tones_AudioBase.prototype = {
 			} else j1++;
 		}
 	}
+	,createAttackEnvelope: function(triggerTime,releaseTime) {
+		var envelope = this.context.createGain();
+		envelope.gain.value = 0;
+		envelope.gain.setValueAtTime(0,triggerTime);
+		envelope.gain.linearRampToValueAtTime(this._volume,releaseTime);
+		envelope.gain.setValueAtTime(this._volume,releaseTime);
+		envelope.connect(this.destination);
+		return envelope;
+	}
 	,__class__: tones_AudioBase
 };
 var tones_Tones = function(audioContext,destinationNode) {
@@ -5911,18 +5929,13 @@ tones_Tones.prototype = $extend(tones_AudioBase.prototype,{
 		id = this.lastId;
 		var triggerTime = this.context.currentTime + delayBy;
 		var releaseTime = triggerTime + this._attack;
-		var envelope = this.context.createGain();
-		envelope.gain.value = 0;
-		envelope.gain.setValueAtTime(0,triggerTime);
-		envelope.gain.linearRampToValueAtTime(this._volume,releaseTime);
-		envelope.gain.setValueAtTime(this._volume,releaseTime);
-		envelope.connect(this.destination);
+		var envelope = this.createAttackEnvelope(triggerTime,releaseTime);
 		var osc = this.context.createOscillator();
 		if(this.type == window.OscillatorTypeShim.CUSTOM) osc.setPeriodicWave(this.customWave); else osc.type = this.type;
 		osc.frequency.value = freq;
 		osc.connect(envelope);
 		osc.start(triggerTime + this.sampleTime);
-		this.activeItems.h[id] = { id : id, src : osc, env : envelope, volume : this._volume, attack : this._attack, release : this._release, triggerTime : triggerTime};
+		this.activeItems.h[id] = { id : id, src : osc, volume : this._volume, env : envelope, attack : this._attack, release : this._release, triggerTime : triggerTime};
 		if(delayBy < this.sampleTime) this.triggerItemBegin(id,triggerTime); else this.delayedBegin.push({ id : id, time : triggerTime});
 		if(autoRelease) this.doRelease(id,releaseTime + this.sampleTime);
 		return id;
@@ -21162,8 +21175,8 @@ if(node != null) {
 tones_utils_TimeUtil._frameTick = new hxsignal_impl_Signal1();
 window.requestAnimationFrame(tones_utils_TimeUtil.onFrame);
 pixi_plugins_app_NapeApplication.FixedTimeStep = 0.016666666666666666;
-pixi_plugins_app_NapeApplication.PositionIterationsPerTimeStep = 50;
-pixi_plugins_app_NapeApplication.VelocityIterationsPerTimeStep = 50;
+pixi_plugins_app_NapeApplication.PositionIterationsPerTimeStep = 32;
+pixi_plugins_app_NapeApplication.VelocityIterationsPerTimeStep = 32;
 zpp_$nape_callbacks_ZPP_$CbType.ANY_SHAPE = new nape_callbacks_CbType();
 zpp_$nape_callbacks_ZPP_$CbType.ANY_BODY = new nape_callbacks_CbType();
 zpp_$nape_callbacks_ZPP_$CbType.ANY_COMPOUND = new nape_callbacks_CbType();

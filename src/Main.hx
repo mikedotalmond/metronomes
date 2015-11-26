@@ -46,9 +46,9 @@ class Main extends NapeApplication {
 	
 	override function setup() {
 		
-		renderer.backgroundColor = 0x292B54;
+		renderer.backgroundColor = 0x1C1D37;
 		
-		notes = [for (i in 0...12) 63 + Std.int(Math.random() * 18) ]; // 1.5 octave range
+		notes = [for (i in 0...12) 32 + Std.int(Math.random() * 18) ]; // 1.5 octave range
 		
 		for (note in 0...notes.length) freqs.push(noteUtils.noteIndexToFrequency(notes[Std.int(Math.random()*notes.length)]));
 		
@@ -64,9 +64,9 @@ class Main extends NapeApplication {
 		
 		tones = new Tones(audioContext, outGain);
 		tones.type = OscillatorType.SAWTOOTH;
-		tones.attack = 0.05;
-		tones.release = 0.5;
-		tones.volume = .5;	
+		tones.attack = 0.02;
+		tones.release = 0.25;
+		tones.volume = 0;	
 		
 		//
 		createMetronomes();
@@ -100,7 +100,7 @@ class Main extends NapeApplication {
 		metronomes = [];
 		var py = 240;
 		var px = 0;
-		for (i in 0...2) {
+		for (i in 0...5) {
 			metronomes[i] = new Metronome(i, px, py, space);
 			metronomes[i].setTuneAnchorPosition(.001 +  0.01 * i);
 			container.addChild(metronomes[i].graphics);
@@ -132,7 +132,16 @@ class Main extends NapeApplication {
 		m.tick(freqs.length);
 		
 		var f = freqs[m.tickIndex];
-		tones.playFrequency(noteUtils.detune(f, Std.int(NapeHelpers.rRange(33))));
+		
+		var n:Float = 1 - (m.index / metronomes.length);
+		
+		tones.volume = .025 + .5 * n*n*n*n;
+		tones.attack = .005 + (1-n) * (1-n) * .5;
+		//tones.release = .25 + (1-(n*n*n*n));
+		
+		f = noteUtils.detune(f, 1200 * m.index + NapeHelpers.rRange(4));
+		
+		tones.playFrequency(f);
 		
 	}
 	

@@ -16,8 +16,8 @@ import tones.AudioBase;
 class NapeApplication extends Application { 
 	
 	static public var FixedTimeStep					:Float	= 1.0 / 60.0;
-	static public var PositionIterationsPerTimeStep	:Int 	= 50;
-	static public var VelocityIterationsPerTimeStep	:Int 	= 50;
+	static public var PositionIterationsPerTimeStep	:Int 	= 32;
+	static public var VelocityIterationsPerTimeStep	:Int 	= 32;
 	
 	public var space		(default, null):Space;
 	public var audioContext	(default, null):AudioContext;

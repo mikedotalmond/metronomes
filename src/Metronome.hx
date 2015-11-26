@@ -160,14 +160,19 @@ class Metronome {
 		massBall.applyImpulse(Vec2.weak(8192, 0));
 	}
 	
+	public var playCount(default,null):Int = 0;
 	public var tickIndex(default,null):Int = -1;
 	public function tick(n:Int) {
+		
+		if (tickIndex == n-1) {
+			setTuneAnchorPosition(.001 + index * 0.005 + (playCount / (n*2)));
+			playCount = (playCount + 1) % n;
+		}
+		
 		tickIndex = (tickIndex + 1) % n;
 
 		var v = massVelocityX;
 		massBall.applyImpulse(Vec2.weak(42 * (v > 0?1: -1), 0));
-		
-		//setTuneAnchorPosition(.001 + index*0.005 + tickIndex / (n+1));
 		
 		ticked = true;
 	}
@@ -180,10 +185,9 @@ class Metronome {
 		
 		graphics.clear();
 		
-		
-		var v = tickIndex / 12;
-		var c = Std.int((v * .9) * 0xff);
-		c = c << 16 | (c>>1) << 8 | (c>>1);
+		var v = tickIndex / 24;
+		var c = Std.int((v * .75) * 0xff);
+		c = c << 16;// | (c >> 1) << 8 | (c >> 1);
 		
 		var poly:Polygon = bar.shapes.at(0).castPolygon;
 		var vertices = poly.worldVerts;
@@ -206,12 +210,12 @@ class Metronome {
 		graphics.endFill();
 		
 		// pivot
-		graphics.beginFill(0xF50E0E);
+		graphics.beginFill(0x3C0202);
 		graphics.drawCircle(pivotBall.position.x, pivotBall.position.y, 8);
 		graphics.endFill();
 		
 		// tune
-		graphics.beginFill(0xF8B1B1);
+		graphics.beginFill(0x640909);
 		graphics.drawCircle(tuneWeight.position.x, tuneWeight.position.y, 16);
 		graphics.endFill();
 		
