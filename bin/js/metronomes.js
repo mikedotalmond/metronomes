@@ -181,7 +181,7 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		var _g11 = 0;
 		while(_g11 < 12) {
 			var i = _g11++;
-			_g.push(48 + Std["int"](Math.random() * 16));
+			_g.push(54 + Std["int"](Math.random() * 16));
 		}
 		this.notes = _g;
 		var _g2 = 0;
@@ -238,7 +238,7 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		var py = 240;
 		var px = 0;
 		var _g = 0;
-		while(_g < 9) {
+		while(_g < 6) {
 			var i = _g++;
 			this.metronomes[i] = new Metronome(i,px,py,this.space);
 			this.metronomes[i].setTuneAnchorPosition(.001 + 0.01 * i);
@@ -278,8 +278,12 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		var x = 1 - m.index / this.metronomes.length;
 		this.tones.set_volume(.025 + .5 * x * x * x * x);
 		this.tones.set_attack(.005 + (1 - x) * (1 - x) * .5);
-		this.tones.set_release(.2 + (1 - x) * .25);
-		f = this.noteUtils.detune(f,300 * m.index + (Math.random() - .5) * 8);
+		this.tones.set_release(.2 + (1 - x) * .5);
+		if(m.index > 1) {
+			var _g = this.tones;
+			_g.set_volume(_g._volume * .8);
+		}
+		f = this.noteUtils.detune(f,1200 * (m.index / 2 | 0) + (Math.random() - .5) * 16);
 		this.tones.playFrequency(f);
 	}
 	,__class__: Main

@@ -51,7 +51,7 @@ class Main extends NapeApplication {
 		
 		
 		// setup audio
-		notes = [for (i in 0...12) 48 + Std.int(Math.random() * 16) ]; // 12 random notes in a 1 octave range
+		notes = [for (i in 0...12) 54 + Std.int(Math.random() * 16) ]; // 12 random notes in a 1 octave range
 		for (note in 0...notes.length) freqs.push(noteUtils.noteIndexToFrequency(notes[Std.int(Math.random()*notes.length)]));
 		
 		outGain = audioContext.createGain();
@@ -98,7 +98,7 @@ class Main extends NapeApplication {
 		metronomes = [];
 		var py = 240;
 		var px = 0;
-		for (i in 0...9) {
+		for (i in 0...6) {
 			metronomes[i] = new Metronome(i, px, py, space);
 			metronomes[i].setTuneAnchorPosition(.001 +  0.01 * i);
 			container.addChild(metronomes[i].graphics);
@@ -135,10 +135,11 @@ class Main extends NapeApplication {
 		
 		tones.volume = .025 + .5 * x * x * x * x;
 		tones.attack = .005 + (1-x) * (1-x) * .5;
-		tones.release = .2 + (1-x) * .25;
-		//tones.release = .25 + (1-(n*n*n*n));
+		tones.release = .2 + (1 - x) * .5;
 		
-		f = noteUtils.detune(f, 300 * m.index + NapeHelpers.rRange(4));
+		if (m.index > 1) tones.volume *= .8;
+		
+		f = noteUtils.detune(f, 1200 * Std.int(m.index/2) + NapeHelpers.rRange(8));
 		
 		tones.playFrequency(f);
 		
