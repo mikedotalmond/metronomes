@@ -158,6 +158,7 @@ pixi_plugins_app_NapeApplication.prototype = $extend(pixi_plugins_app_Applicatio
 	,__class__: pixi_plugins_app_NapeApplication
 });
 var Main = function() {
+	this.g = new PIXI.Graphics();
 	this.phase = -Math.PI / 2;
 	this.freqs = [];
 	this.notes = [];
@@ -211,6 +212,10 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 			}
 		},2500);
 	}
+	,resize: function() {
+		this.container.x = this.width / 2 - this.container.width / 2;
+		this.container.y = this.height / 2 - this.container.height / 2;
+	}
 	,updateSpace: function(dt) {
 		var _g = 0;
 		var _g1 = this.metronomes;
@@ -231,11 +236,11 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 			m.draw(dt);
 		}
 	}
-	,resize: function() {
-		this.container.x = this.width / 2 - this.container.width / 2;
-		this.container.y = this.height / 2 - this.container.height / 2;
-	}
 	,createMetronomes: function() {
+		this.container.addChild(this.g);
+		this.g.lineStyle(2,3080192);
+		this.g.moveTo(0,240);
+		this.g.lineTo(1075,240);
 		this.metronomes = [];
 		var py = 240;
 		var px = 0;
@@ -272,10 +277,11 @@ Main.prototype = $extend(pixi_plugins_app_NapeApplication.prototype,{
 		var m = cb.zpp_inner.int2.outer_i.get_userData().metronome;
 		m.tick(this.freqs.length);
 		var f = this.freqs[m.tickIndex];
-		var x = 1 - m.index / this.metronomes.length;
-		this.tones.set_volume(.025 + .5 * x * x * x * x);
-		this.tones.set_attack(.005 + (1 - x) * (1 - x) * .5);
-		this.tones.set_release(.2 + (1 - x) * .5);
+		var x = m.index / this.metronomes.length;
+		var x1 = 1 - x;
+		this.tones.set_volume(.025 + .5 * x1 * x1 * x1 * x1);
+		this.tones.set_attack(.005 + x * x * .5);
+		this.tones.set_release(.2 + x * .5);
 		if(m.index > 1) {
 			var _g = this.tones;
 			_g.set_volume(_g._volume * .8);
@@ -1003,7 +1009,7 @@ zpp_$nape_util_ZNPList_$ZPP_$CbSet.prototype = {
 };
 var Metronome = function(index,x,y,space) {
 	this.tp = 0;
-	this.ballOff = new hxColorToolkit_spaces_RGB().setColor(6951699);
+	this.ballOff = new hxColorToolkit_spaces_RGB().setColor(5443343);
 	this.ballOn = new hxColorToolkit_spaces_RGB().setColor(16585748);
 	this.ballColour = new hxColorToolkit_spaces_RGB();
 	this.tickIndex = -1;
@@ -1164,7 +1170,7 @@ Metronome.prototype = {
 		}
 		this.graphics.clear();
 		var v = this.tickIndex / 24;
-		var c = (v * 255 | 0) << 16;
+		var c = 16 + (v * 239 | 0) << 16;
 		var vertices = this.bar.zpp_inner.wrap_shapes.at(0).get_castPolygon().get_worldVerts();
 		var position = vertices.at(0);
 		this.graphics.beginFill(c);
@@ -1219,10 +1225,10 @@ Metronome.prototype = {
 		this.graphics.beginFill(c);
 		this.graphics.drawCircle(this.massBall.get_position().get_x(),this.massBall.get_position().get_y(),32);
 		this.graphics.endFill();
-		this.graphics.beginFill(3932674);
+		this.graphics.beginFill(c);
 		this.graphics.drawCircle(this.pivotBall.get_position().get_x(),this.pivotBall.get_position().get_y(),8);
 		this.graphics.endFill();
-		this.graphics.beginFill(6555913);
+		this.graphics.beginFill(c);
 		this.graphics.drawCircle(this.tuneWeight.get_position().get_x(),this.tuneWeight.get_position().get_y(),16);
 		this.graphics.endFill();
 		this.ticked = false;

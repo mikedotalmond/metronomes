@@ -152,6 +152,8 @@ class Metronome {
 		this.x = _x;
 		this.y = _y;
 		
+		
+		
 		tuneAnchorPosition = -1;
 		setTuneAnchorPosition(0.5);
 	}
@@ -178,7 +180,7 @@ class Metronome {
 	
 	var ballColour:RGB = new RGB();
 	var ballOn:RGB = new RGB().setColor(0xfD1414);
-	var ballOff:RGB = new RGB().setColor(0x6A1313);
+	var ballOff:RGB = new RGB().setColor(0x530F0F);
 	var tp:Float = 0;
 	
 	public function update(dt:Float) {
@@ -197,7 +199,7 @@ class Metronome {
 		graphics.clear();
 		
 		var v = tickIndex / 24;
-		var c = Std.int((v * 1) * 0xff) << 16;
+		var c = (0x10 + Std.int(v * 0xef)) << 16;
 		var vertices = bar.shapes.at(0).castPolygon.worldVerts;
 		var position = vertices.at(0);
 		
@@ -220,12 +222,12 @@ class Metronome {
 		graphics.endFill();
 		
 		// pivot
-		graphics.beginFill(0x3C0202);
+		graphics.beginFill(c);
 		graphics.drawCircle(pivotBall.position.x, pivotBall.position.y, 8);
 		graphics.endFill();
 		
 		// tune
-		graphics.beginFill(0x640909);
+		graphics.beginFill(c);
 		graphics.drawCircle(tuneWeight.position.x, tuneWeight.position.y, 16);
 		graphics.endFill();
 		

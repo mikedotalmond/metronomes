@@ -1,6 +1,7 @@
 package;
 
 import haxe.Timer;
+import hxColorToolkit.spaces.Gray;
 import js.Browser;
 import js.html.audio.GainNode;
 import nape.callbacks.CbEvent;
@@ -10,6 +11,7 @@ import nape.callbacks.InteractionType;
 import nape.geom.Vec2;
 import nape.space.Space;
 import pixi.core.display.Container;
+import pixi.core.graphics.Graphics;
 import pixi.plugins.app.NapeApplication;
 import pixi.plugins.NapeHelpers;
 import tones.AudioBase;
@@ -60,7 +62,6 @@ class Main extends NapeApplication {
 		container.scale.set(.75);
 		renderer.backgroundColor = 0x10101F;
 		
-		
 		// setup audio
 		notes = [for (i in 0...12) 54 + Std.int(Math.random() * 16) ]; // 12 random notes in a 1 octave range
 		for (note in 0...notes.length) freqs.push(noteUtils.noteIndexToFrequency(notes[Std.int(Math.random()*notes.length)]));
@@ -83,18 +84,6 @@ class Main extends NapeApplication {
 		}, 2500);
 	}
 	
-	override function updateSpace(dt:Float) {
-		for (m in metronomes) {
-			m.update(dt);
-			phase += .0001;
-			m.setTuneAnchorPosition(.01 + .01 * m.index + .48*(Math.sin(phase)+1));
-		}
-	}
-	
-	override function draw(dt:Float) {
-		for (m in metronomes) m.draw(dt);
-	}
-	
 	override function resize() {
 		//container.scale.set();
 		//width / height;
@@ -103,8 +92,26 @@ class Main extends NapeApplication {
 		container.y = height / 2 - container.height / 2;
 	}
 	
+	override function updateSpace(dt:Float) {
+		for (m in metronomes) {
+			m.update(dt);
+			phase += .0001;
+			m.setTuneAnchorPosition(.01 + .01 * m.index + .48*(Math.sin(phase)+1));
+		}
+	}
 	
+	override function draw(dt:Float) {		
+		for (m in metronomes) m.draw(dt);
+	}
+	
+	var g = new Graphics();
 	function createMetronomes() {
+		
+		container.addChild(g);
+		g.lineStyle(2, 0x2F0000);
+		g.moveTo(0, 240);
+		g.lineTo(215*5, 240);
+		
 		
 		metronomes = [];
 		var py = 240;
@@ -129,18 +136,18 @@ class Main extends NapeApplication {
 		
 		var f = freqs[m.tickIndex];
 		
-		var x:Float = 1 - (m.index / metronomes.length);
+		var x:Float = (m.index / metronomes.length);
+		var x1:Float = 1 - x;
 		
-		tones.volume = .025 + .5 * x * x * x * x;
-		tones.attack = .005 + (1-x) * (1-x) * .5;
-		tones.release = .2 + (1 - x) * .5;
+		tones.volume = .025 + .5 * x1 * x1 * x1 * x1;
+		tones.attack = .005 + x * x * .5;
+		tones.release = .2 + x * .5;
 		
 		if (m.index > 1) tones.volume *= .8;
 		
 		f = noteUtils.detune(f, 1200 * Std.int(m.index/2) + NapeHelpers.rRange(8));
 		
 		tones.playFrequency(f);
-		
 	}
 	
 	
