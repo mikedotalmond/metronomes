@@ -32,6 +32,7 @@
     <library name="pixijs" />
     <library name="nape" />
     <library name="hxColorToolkit" />
+    <library name="tones" />
   </haxelib>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
