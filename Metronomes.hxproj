@@ -33,6 +33,7 @@
     <library name="nape" />
     <library name="hxColorToolkit" />
     <library name="tones" />
+    <library name="closure" />
   </haxelib>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>

@@ -1,7 +1,6 @@
 package;
 
 import haxe.Timer;
-import hxColorToolkit.spaces.Gray;
 import js.Browser;
 import js.html.audio.GainNode;
 import nape.callbacks.CbEvent;
@@ -20,12 +19,10 @@ import tones.Tones;
 import tones.utils.NoteFrequencyUtil;
 
 
-
 /**
  * ...
  * @author Mike Almond - https://github.com/mikedotalmond
  */
-
 class Main extends NapeApplication {
 
 	var tones:Tones;
@@ -55,7 +52,6 @@ class Main extends NapeApplication {
 	
 	override function setup() {
 		
-		
 		// setup pixi
 		container = new Container();
 		stage.addChild(container);
@@ -72,22 +68,18 @@ class Main extends NapeApplication {
 		
 		tones = new Tones(audioContext, outGain);
 		tones.type = OscillatorType.SAWTOOTH;
-		tones.attack = 0.02;
+		tones.attack = 0.05;
 		tones.release = 0.25;
 		tones.volume = 0;	
 		
 		// 
 		createMetronomes();
-		
 		Timer.delay(function() {
 			for (m in metronomes) m.applyStartForce();
-		}, 2500);
+		}, 2000);
 	}
 	
 	override function resize() {
-		//container.scale.set();
-		//width / height;
-		
 		container.x = width / 2 - container.width / 2;
 		container.y = height / 2 - container.height / 2;
 	}
@@ -111,7 +103,6 @@ class Main extends NapeApplication {
 		g.lineStyle(2, 0x2F0000);
 		g.moveTo(0, 240);
 		g.lineTo(215*5, 240);
-		
 		
 		metronomes = [];
 		var py = 240;
@@ -139,8 +130,8 @@ class Main extends NapeApplication {
 		var x:Float = (m.index / metronomes.length);
 		var x1:Float = 1 - x;
 		
-		tones.volume = .025 + .5 * x1 * x1 * x1 * x1;
-		tones.attack = .005 + x * x * .5;
+		tones.volume = .025 + .25 * x1 * x1 * x1 * x1;
+		tones.attack = .025 + x * x * .5;
 		tones.release = .2 + x * .5;
 		
 		if (m.index > 1) tones.volume *= .8;
