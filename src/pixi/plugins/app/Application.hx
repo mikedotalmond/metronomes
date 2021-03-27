@@ -1,11 +1,8 @@
 package pixi.plugins.app;
 
 import js.html.Element;
-import pixi.core.renderers.webgl.WebGLRenderer;
-import pixi.core.renderers.canvas.CanvasRenderer;
-import pixi.core.renderers.SystemRenderer;
-import pixi.core.renderers.Detector;
 import pixi.core.display.Container;
+import pixi.core.renderers.webgl.Renderer;
 import js.html.Event;
 import js.html.CanvasElement;
 import js.Browser;
@@ -162,7 +159,7 @@ class Application {
 		skipFrame = false;
 		autoResize = true;
 		transparent = false;
-		antialias = false;
+		antialias = true;
 		forceFXAA = false;
 		backgroundColor = 0xFFFFFF;
 		width = Browser.window.innerWidth;
@@ -189,18 +186,20 @@ class Application {
 
 		stage = new Container();
 
-		var renderingOptions:RenderingOptions = {};
+		var renderingOptions:pixi.core.RenderOptions = {};
 		renderingOptions.view = canvas;
 		renderingOptions.backgroundColor = backgroundColor;
 		renderingOptions.resolution = pixelRatio;
 		renderingOptions.antialias = antialias;
 		renderingOptions.forceFXAA = forceFXAA;
-		renderingOptions.autoResize = autoResize;
 		renderingOptions.transparent = transparent;
+		renderingOptions.width = Std.int(width);
+		renderingOptions.height = Std.int(height);
 
-		if (rendererType == AUTO) renderer = Detector.autoDetectRenderer(width, height, renderingOptions);
-		else if (rendererType == CANVAS) renderer = new CanvasRenderer(width, height, renderingOptions);
-		else renderer = new WebGLRenderer(width, height, renderingOptions);
+		//if (rendererType == AUTO) renderer = Detector.autoDetectRenderer(width, height, renderingOptions);
+		//else if (rendererType == CANVAS) renderer = new CanvasRenderer(width, height, renderingOptions);
+		//else 
+		renderer = new Renderer(renderingOptions);
 
 		if (roundPixels) renderer.roundPixels = true;
 		if (autoResize) Browser.window.onresize = _onWindowResize;

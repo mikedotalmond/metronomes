@@ -47,7 +47,9 @@ class Main extends NapeApplication {
 		NapeApplication.PositionIterationsPerTimeStep = 20;
 		
 		noteUtils = new NoteFrequencyUtil();
+		
 		super(Browser.document.getElementById('pixi-container'), new Space(Vec2.get(0, 10000)), AudioBase.createContext());
+		
 	}
 	
 	override function setup() {
@@ -55,12 +57,12 @@ class Main extends NapeApplication {
 		// setup pixi
 		container = new Container();
 		stage.addChild(container);
-		container.scale.set(.75);
+		trace(container.width, container.height);
+		//container.scale.set(.75);
 		renderer.backgroundColor = 0x10101F;
 		
 		// setup audio
-		notes = [for (i in 0...12) 54 + Std.int(Math.random() * 16) ]; // 12 random notes in a 1 octave range
-		for (note in 0...notes.length) freqs.push(noteUtils.noteIndexToFrequency(notes[Std.int(Math.random()*notes.length)]));
+		selectFreqs();
 		
 		outGain = audioContext.createGain();
 		outGain.gain.value = .5;
@@ -79,16 +81,45 @@ class Main extends NapeApplication {
 		}, 2000);
 	}
 	
+	
+	function selectFreqs(){	
+		freqs = [for (i in 0...12) noteUtils.noteIndexToFrequency(54 + Std.int(Math.random() * 17))];
+	}
+	
+	
 	override function resize() {
+		
+		container.scale.set(Math.min(width / 1440.0, height / 440.0));
+		
+		//trace(container.width, container.height);
+		
 		container.x = width / 2 - container.width / 2;
 		container.y = height / 2 - container.height / 2;
+		
 	}
+	
+	var lastPhase:Float = 0.0;
+	var lastDirection = 1;
 	
 	override function updateSpace(dt:Float) {
 		for (m in metronomes) {
 			m.update(dt);
 			phase += .0001;
-			m.setTuneAnchorPosition(.01 + .01 * m.index + .48*(Math.sin(phase)+1));
+			var p = Math.sin(phase) + 1;
+			m.setTuneAnchorPosition(.01 + .01 * m.index + .48 * (p));
+			
+			if (m.index == 0){
+				var d = (p - lastPhase) < 0 ? -1 : 1;
+				
+				if (d != lastDirection){
+					//trace("new notes please");
+					selectFreqs();
+				}
+				
+				lastDirection = d;
+				lastPhase = p;
+				
+			}
 		}
 	}
 	
@@ -101,12 +132,12 @@ class Main extends NapeApplication {
 		
 		container.addChild(g);
 		g.lineStyle(2, 0x2F0000);
-		g.moveTo(0, 240);
-		g.lineTo(215*5, 240);
+		g.moveTo(32, 235);
+		g.lineTo(215*5+32, 235);
 		
 		metronomes = [];
-		var py = 240;
-		var px = 0;
+		var py = 235;
+		var px = 32;
 		for (i in 0...6) {
 			metronomes[i] = new Metronome(i, px, py, space);
 			metronomes[i].setTuneAnchorPosition(.001 +  0.01 * i);
